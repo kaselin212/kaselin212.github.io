@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧會議室候補機制 Demo</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray: #6b7280;
+            --bg: #f3f4f6;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: #333; max-width: 1000px; margin: 0 auto; }
+        h2, h3 { color: #1f2937; }
+        
+        /* Layout */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Form Elements */
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        select, button { padding: 10px; border-radius: 6px; border: 1px solid #d1d5db; width: 100%; margin-bottom: 15px; }
+        button { cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; border: none; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: var(--danger); color: white; border: none; }
+        .btn-confirm { background: var(--success); color: white; border: none; }
+        
+        /* Status Display */
+        .status-box { padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 10px; }
+        .date-display { font-size: 1.2em; color: var(--primary); font-weight: bold; margin-bottom: 10px; display: block; }
+        
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; color: white; }
+        .bg-green { background: var(--success); }
+        .bg-red { background: var(--danger); }
+        .bg-orange { background: var(--warning); }
+        .bg-gray { background: var(--gray); }
+
+        /* Queue List */
+        .queue-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        .queue-item:last-child { border-bottom: none; }
+        
+        /* Simulation Controls */
+        .sim-control { border-top: 2px dashed #ccc; padding-top: 15px; margin-top: 15px; }
+        
+        /* Notification Modal Simulation */
+        .notification-area { background: #fffbeb; border: 1px solid #fcd34d; padding: 15px; border-radius: 8px; display: none; animation: slideIn 0.3s ease; }
+        .timer-bar { height: 4px; background: #e5e7eb; border-radius: 2px; margin: 10px 0; overflow: hidden; }
+        .timer-fill { height: 100%; background: var(--warning); width: 100%; transition: width 1s linear; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📅 會議室預約與候補機制示範</h1>
+    <p>模擬情境：使用者設定「每月最後一週」的特殊週期，並觸發候補流程。</p>
+
+    <div class="grid">
+        <div class="card">
+            <h3>1. 設定週期規則 (User Action)</h3>
+            <label>選擇週期模式</label>
+            <select id="patternSelect" onchange="calculateDate()">
+                <option value="last_wed">每月最後一週的星期三 (Demo重點)</option>
+                <option value="3rd_fri">每月第 3 週的星期五</option>
+                <option value="last_day">每月的最後一天</option>
+            </select>
+
+            <label>系統自動試算日期 (2025年12月為例)</label>
+            <span id="calculatedDate" class="date-display">計算中...</span>
+
+            <label>輸入預約人姓名</label>
+            <input type="text" id="userName" placeholder="例如：Alice" style="padding:10px; width:95%; margin-bottom:15px; border:1px solid #ccc; border-radius:6px;">
+
+            <button class="btn-primary" onclick="attemptBooking()">📅 嘗試預約</button>
+            <p style="font-size:0.9em; color:#666;">*若時段已滿，將自動進入候補清單</p>
+        </div>
+
+        <div class="card">
+            <h3>2. 系統狀態與資料庫 (System View)</h3>
+            
+            <div class="status-box">
+                <div><strong>當前時段狀態：</strong> <span id="slotStatus" class="badge bg-green">可預約</span></div>
+                <div style="margin-top:5px;"><strong>目前預約者：</strong> <span id="currentOwner">無</span></div>
+            </div>
+
+            <h4 style="margin-top:20px;">候補隊列 (Waitlist Queue)</h4>
+            <div id="waitlistQueue" style="background:#f9fafb; padding:10px; border-radius:6px; min-height:50px;">
+                <p style="color:#999; text-align:center; margin:0;">目前無人候補</p>
+            </div>
+            
+            <div style="margin-top:10px; font-size:0.8em; color:gray;">
+                <p>⚙️ 規則：FIFO (先進先出)</p>
+                <p>🔒 鎖定機制：通知後鎖定 24 小時</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card sim-control">
+        <h3>3. 流程模擬控制台 (Simulation)</h3>
+        <p>在此模擬「原預約者取消」，觀察系統如何自動觸發通知。</p>
+        
+        <button class="btn-danger" id="cancelBtn" onclick="cancelCurrentBooking()" disabled>❌ 模擬：原預約者取消會議</button>
+
+        <div id="notificationArea" class="notification-area">
+            <h4>🔔 系統通知 (給候補順位 #1)</h4>
+            <p><strong><span id="notifyUser">User</span></strong> 您好，12月最後一週週三的會議室已釋出！</p>
+            <p>系統已為您<strong>鎖定時段</strong>，請在期限內確認。</p>
+            
+            <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+            <p style="font-size:0.8em; text-align:right;">剩餘確認時間：<span id="timeLeft">24:00:00</span></p>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn-confirm" onclick="confirmWaitlist()">✔ 確認預約</button>
+                <button class="btn-danger" onclick="rejectWaitlist()">✖ 放棄 (讓給下一位)</button>
+            </div>
+        </div>
+        
+        <div id="logs" style="margin-top:20px; font-family:monospace; font-size:0.85em; background:#333; color:#0f0; padding:10px; border-radius:6px; max-height:150px; overflow-y:auto;">
+            <div>> System Ready...</div>
+        </div>
+    </div>
+
+    <script>
+        // 模擬後端資料
+        let currentBooking = null; // { user: "Name", status: "confirmed" }
+        let waitlist = []; // [ "Bob", "Charlie" ]
+        let pendingUser = null; // 當前正在被通知的候補者
+        let timerInterval = null;
+
+        // 初始化日期計算
+        window.onload = function() {
+            calculateDate();
+            addLog("系統初始化完成。");
+        }
+
+        // 1. 週期計算邏輯 (核心功能一)
+        function calculateDate() {
+            const pattern = document.getElementById('patternSelect').value;
+            const year = 2025;
+            const month = 11; // 12月 (JS從0開始)
+            let dateObj;
+
+            if (pattern === 'last_wed') {
+                // 找出當月最後一天
+                dateObj = new Date(year, month + 1, 0); 
+                // 往回找直到星期三 (Wednesday is 3)
+                while (dateObj.getDay() !== 3) {
+                    dateObj.setDate(dateObj.getDate() - 1);
+                }
+            } else if (pattern === '3rd_fri') {
+                dateObj = new Date(year, month, 1);
+                let count = 0;
+                while (count < 3) {
+                    if (dateObj.getDay() === 5) count++;
+                    if (count < 3) dateObj.setDate(dateObj.getDate() + 1);
+                }
+            } else {
+                dateObj = new Date(year, month + 1, 0); // 最後一天
+            }
+
+            const dateStr = `${dateObj.getFullYear()}/${dateObj.getMonth()+1}/${dateObj.getDate()} (週${['日','一','二','三','四','五','六'][dateObj.getDay()]})`;
+            document.getElementById('calculatedDate').innerText = dateStr;
+        }
+
+        // 2. 預約 / 候補邏輯 (核心功能二)
+        function attemptBooking() {
+            const user = document.getElementById('userName').value || "Anonymous";
+            
+            if (!currentBooking && !pendingUser) {
+                // 情境 A: 直接預約成功
+                currentBooking = { user: user, status: 'confirmed' };
+                updateUI();
+                addLog(`[成功] ${user} 已預約成功。`);
+            } else {
+                // 情境 B: 進入候補
+                // 檢查是否已在名單中 (簡單防呆)
+                if (currentBooking?.user === user || waitlist.includes(user)) {
+                    alert("您已經在預約或候補名單中！");
+                    return;
+                }
+                waitlist.push(user);
+                updateUI();
+                addLog(`[候補] 時段已滿，${user} 加入候補隊列 (順位 ${waitlist.length})。`);
+            }
+            
+            // 清空輸入框方便下一位測試
+            const names = ["Bob", "Charlie", "David", "Eve"];
+            document.getElementById('userName').value = names[Math.floor(Math.random() * names.length)];
+        }
+
+        // 3. 取消與觸發通知邏輯 (核心功能三、四)
+        function cancelCurrentBooking() {
+            if (!currentBooking) return;
+            const oldUser = currentBooking.user;
+            currentBooking = null;
+            addLog(`[取消] 原預約者 ${oldUser} 已取消。`);
+            
+            checkWaitlist(); // 檢查候補
+            updateUI();
+        }
+
+        function checkWaitlist() {
+            if (waitlist.length > 0) {
+                // 取出第一位
+                pendingUser = waitlist.shift();
+                addLog(`[通知] 系統鎖定時段，通知候補 #1: ${pendingUser}。`);
+                
+                // 鎖定 UI 狀態
+                document.getElementById('slotStatus').innerText = "系統鎖定中 (等待回覆)";
+                document.getElementById('slotStatus').className = "badge bg-orange";
+                
+                showNotification(pendingUser);
+            } else {
+                addLog(`[釋出] 無候補人員，時段釋出為可預約狀態。`);
+            }
+        }
+
+        // 模擬通知彈窗與倒數
+        function showNotification(user) {
+            const area = document.getElementById('notificationArea');
+            document.getElementById('notifyUser').innerText = user;
+            area.style.display = 'block';
+            
+            // 模擬倒數條 (視覺效果)
+            const fill = document.getElementById('timerFill');
+            fill.style.width = '100%';
+            setTimeout(() => fill.style.width = '0%', 100);
+        }
+
+        // 候補者回覆：確認
+        function confirmWaitlist() {
+            if (!pendingUser) return;
+            currentBooking = { user: pendingUser, status: 'confirmed' };
+            addLog(`[確認] 候補者 ${pendingUser} 接受預約。流程結束。`);
+            
+            closeNotification();
+            updateUI();
+        }
+
+        // 候補者回覆：放棄
+        function rejectWaitlist() {
+            if (!pendingUser) return;
+            addLog(`[放棄] 候補者 ${pendingUser} 放棄機會。`);
+            pendingUser = null;
+            
+            closeNotification();
+            updateUI(); // 先更新 UI
+            setTimeout(checkWaitlist, 1000); // 1秒後通知下一位
+        }
+
+        function closeNotification() {
+            document.getElementById('notificationArea').style.display = 'none';
+            pendingUser = null;
+        }
+
+        // 更新畫面狀態
+        function updateUI() {
+            const statusBadge = document.getElementById('slotStatus');
+            const ownerSpan = document.getElementById('currentOwner');
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            if (currentBooking) {
+                statusBadge.innerText = "已額滿";
+                statusBadge.className = "badge bg-red";
+                ownerSpan.innerText = currentBooking.user;
+                cancelBtn.disabled = false;
+            } else if (pendingUser) {
+                statusBadge.innerText = "系統鎖定中 (等待候補回覆)";
+                statusBadge.className = "badge bg-orange";
+                ownerSpan.innerText = "N/A";
+                cancelBtn.disabled = true;
+            } else {
+                statusBadge.innerText = "可預約";
+                statusBadge.className = "badge bg-green";
+                ownerSpan.innerText = "無";
+                cancelBtn.disabled = true;
+            }
+
+            // 更新候補清單
+            const queueDiv = document.getElementById('waitlistQueue');
+            if (waitlist.length === 0) {
+                queueDiv.innerHTML = '<p style="color:#999; text-align:center; margin:0;">目前無人候補</p>';
+            } else {
+                let html = '';
+                waitlist.forEach((u, index) => {
+                    html += `<div class="queue-item">
+                        <span><strong>#${index + 1}</strong> ${u}</span>
+                        <span style="font-size:0.8em; color:gray;">${new Date().toLocaleTimeString()} 申請</span>
+                    </div>`;
+                });
+                queueDiv.innerHTML = html;
+            }
+        }
+
+        // Log 輔助功能
+        function addLog(msg) {
+            const logDiv = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${time}] ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
