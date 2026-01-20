@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelSnap v3.2 - Custom Colors</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TravelSnap v3.3 - Mobile Ready</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
     
     <style>
         :root { --bg: #F3F4F6; --card: #FFFFFF; --text: #1F2937; --accent: #111827; --border: #E5E7EB; }
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Noto Sans TC', sans-serif; display: flex; justify-content: center; padding: 40px 20px; min-height: 100vh; }
         
         .app-layout { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 1280px; }
@@ -32,13 +32,15 @@
         .itinerary-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .itinerary-row { display: flex; gap: 8px; align-items: center; background: #fff; padding: 6px; border: 1px solid transparent; border-radius: 6px; transition: 0.2s; }
         .itinerary-row:hover { background: #F9FAFB; border-color: var(--border); }
-        .drag-handle { cursor: grab; color: #D1D5DB; padding: 8px; display: flex; align-items: center; }
+        .drag-handle { cursor: grab; color: #D1D5DB; padding: 8px; display: flex; align-items: center; min-width: 30px; justify-content: center; } 
         .drag-handle:hover { color: var(--accent); }
         .row-num { font-size: 0.8rem; font-weight: 700; width: 20px; text-align: center; color: #9CA3AF; }
         
+        /* 行程輸入框修正 */
         input.time-inp { width: 80px !important; text-align: center; margin-bottom: 0 !important; flex-shrink: 0; }
-        input.event-inp { flex: 1; margin-bottom: 0 !important; min-width: 0; }
-        .btn-del-row { color: #EF4444; cursor: pointer; padding: 8px; opacity: 0.3; transition: 0.2s; font-size: 0.9rem; }
+        input.event-inp { flex: 1; margin-bottom: 0 !important; min-width: 0; } /* min-width: 0 是 flex 容器內讓文字不溢出的關鍵 */
+        
+        .btn-del-row { color: #EF4444; cursor: pointer; padding: 8px; opacity: 0.3; transition: 0.2s; font-size: 0.9rem; min-width: 30px; text-align: center; }
         .btn-del-row:hover { opacity: 1; background: #FEF2F2; border-radius: 4px; }
         
         .btn-add-row { width: 100%; padding: 10px; border: 1px dashed var(--border); background: #fff; color: #6B7280; font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -46,20 +48,17 @@
         .btn-add-row:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Style Options */
-        .style-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; } /* 改為4欄 */
+        .style-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .style-btn { padding: 10px; border: 1px solid var(--border); background: #fff; cursor: pointer; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #6B7280; text-align: center; transition: 0.2s; }
         .style-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
         /* Custom Color Panel */
         #customColorPanel { display: none; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        
         .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .color-control { display: flex; align-items: center; gap: 8px; background: #fff; padding: 6px 10px; border-radius: 6px; border: 1px solid #E5E7EB; }
         .color-control label { font-size: 0.75rem; font-weight: 600; color: #6B7280; flex: 1; }
-        input[type="color"] { width: 24px; height: 24px; border: none; padding: 0; background: none; cursor: pointer; border-radius: 4px; }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); }
+        input[type="color"] { width: 24px; height: 24px; border: none; padding: 0; background: none; cursor: pointer; }
 
         /* Controls */
         .control-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
@@ -80,21 +79,45 @@
         .canvas-container { position: relative; width: 360px; height: 640px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); background: #eee; overflow: hidden; border-radius: 4px; }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* Sticker Controls */
-        .floating-sticker { position: absolute; cursor: grab; z-index: 10; display: block; line-height: 0; }
-        .floating-sticker.active { cursor: grabbing; }
+        /* Sticker Controls - Mobile Friendly */
+        .floating-sticker { position: absolute; cursor: grab; z-index: 10; display: block; line-height: 0; touch-action: none; /* 防止瀏覽器預設觸控行為 */ }
+        .floating-sticker.active { cursor: grabbing; outline: 1px dashed rgba(255,255,255,0.8); box-shadow: 0 0 0 1px rgba(0,0,0,0.2); }
         .floating-sticker img { width: 100%; height: 100%; display: block; pointer-events: none; }
-        .sticker-ctrl { position: absolute; width: 24px; height: 24px; background: #fff; border: 1px solid var(--text); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 20; }
-        .floating-sticker:hover { outline: 1px dashed rgba(255,255,255,0.8); box-shadow: 0 0 0 1px rgba(0,0,0,0.2); }
+        
+        /* 放大按鈕尺寸以便手指點擊 (30px) */
+        .sticker-ctrl { position: absolute; width: 30px; height: 30px; background: #fff; border: 1px solid var(--text); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 14px; color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 20; }
+        
+        /* 只要是 touch device 或是 hover 都顯示控制項 */
         .floating-sticker:hover .sticker-ctrl, .floating-sticker.active .sticker-ctrl { display: flex; }
-        .btn-del { top: -12px; left: -12px; color: #EF4444; border-color: #EF4444; cursor: pointer; }
-        .btn-rot { top: -12px; right: -12px; cursor: crosshair; }
-        .btn-sz  { bottom: -12px; right: -12px; cursor: nwse-resize; }
+        
+        .btn-del { top: -15px; left: -15px; color: #EF4444; border-color: #EF4444; }
+        .btn-rot { top: -15px; right: -15px; }
+        .btn-sz  { bottom: -15px; right: -15px; }
 
         .btn-download { margin-top: 20px; width: 360px; background: #fff; border: 1px solid var(--border); color: var(--text); padding: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        .btn-download:hover { background: #F9FAFB; border-color: var(--text); }
+        
+        /* --- Mobile Responsive Fixes --- */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .app-layout { gap: 20px; }
+            .controls-panel { 
+                padding: 20px; /* 減少內距 */
+                min-width: 100%; 
+                border-radius: 12px;
+            }
+            .header h1 { font-size: 1.5rem; }
+            
+            /* 輸入框調整 */
+            .itinerary-row { padding: 4px; gap: 4px; }
+            input.time-inp { width: 70px !important; font-size: 0.9rem; padding: 10px 4px; } /* 縮小時間框 */
+            input.event-inp { font-size: 0.9rem; padding: 10px 8px; }
+            .drag-handle { padding: 4px; min-width: 20px; }
+            .btn-del-row { padding: 4px; min-width: 25px; }
 
-        @media (max-width: 850px) { .app-layout { flex-direction: column; align-items: center; } .controls-panel { width: 100%; min-width: auto; } .preview-panel { position: relative; top: 0; width: 100%; } }
+            .preview-panel { width: 100%; min-width: auto; }
+            .canvas-container { width: 100%; height: auto; aspect-ratio: 9/16; } /* 保持比例 */
+            .btn-download { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -136,24 +159,11 @@
 
         <div id="customColorPanel">
             <div class="color-grid">
-                <div class="color-control">
-                    <label>Background</label>
-                    <input type="color" id="custBg" value="#EBF4FF">
-                </div>
-                <div class="color-control">
-                    <label>Text</label>
-                    <input type="color" id="custText" value="#1E3A8A">
-                </div>
-                <div class="color-control">
-                    <label>Accent</label>
-                    <input type="color" id="custAccent" value="#3B82F6">
-                </div>
-                <div class="color-control">
-                    <label>Line</label>
-                    <input type="color" id="custLine" value="#BFDBFE">
-                </div>
+                <div class="color-control"><label>Bg</label><input type="color" id="custBg" value="#EBF4FF"></div>
+                <div class="color-control"><label>Text</label><input type="color" id="custText" value="#1E3A8A"></div>
+                <div class="color-control"><label>Accent</label><input type="color" id="custAccent" value="#3B82F6"></div>
+                <div class="color-control"><label>Line</label><input type="color" id="custLine" value="#BFDBFE"></div>
             </div>
-            <div style="font-size:0.7rem; color:#9CA3AF; margin-top:8px; text-align:center;">Overlay color auto-calculated from BG</div>
         </div>
 
         <div class="control-row">
@@ -196,6 +206,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // Elements
         const destInput = document.getElementById('destInput');
         const dateInput = document.getElementById('dateInput');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -213,7 +224,6 @@
         const bgFitSelect = document.getElementById('bgFitSelect');
         const canvasContainer = document.getElementById('canvasContainer');
         
-        // Custom Color Inputs
         const customColorPanel = document.getElementById('customColorPanel');
         const custBg = document.getElementById('custBg');
         const custText = document.getElementById('custText');
@@ -225,7 +235,7 @@
         let overlayOpacity = 0.4;
         dateInput.valueAsDate = new Date();
 
-        // --- 1. Dynamic Itinerary Logic ---
+        // 1. Itinerary Logic
         let itineraryItems = [
             { t: '09:00', e: '清水寺參拜' },
             { t: '11:00', e: '二年坂星巴克' },
@@ -240,7 +250,6 @@
                 const div = document.createElement('div');
                 div.className = 'itinerary-row';
                 const delStyle = itineraryItems.length <= 1 ? 'visibility:hidden;' : '';
-                
                 div.innerHTML = `
                     <div class="drag-handle"><i class="fa-solid fa-bars"></i></div>
                     <div class="row-num">${index + 1}</div>
@@ -248,66 +257,44 @@
                     <input type="text" class="event-inp" value="${item.e}">
                     <i class="fa-solid fa-trash-can btn-del-row" style="${delStyle}"></i>
                 `;
-                
-                const timeInput = div.querySelector('.time-inp');
-                const eventInput = div.querySelector('.event-inp');
-                const delBtn = div.querySelector('.btn-del-row');
-
-                timeInput.addEventListener('input', (e) => { itineraryItems[index].t = e.target.value; drawStory(); });
-                eventInput.addEventListener('input', (e) => { itineraryItems[index].e = e.target.value; drawStory(); });
-                
-                delBtn.addEventListener('click', () => {
-                    if (itineraryItems.length > 1) {
-                        itineraryItems.splice(index, 1);
-                        renderItineraryList();
-                        drawStory();
-                    }
+                div.querySelector('.time-inp').addEventListener('input', (e) => { itineraryItems[index].t = e.target.value; drawStory(); });
+                div.querySelector('.event-inp').addEventListener('input', (e) => { itineraryItems[index].e = e.target.value; drawStory(); });
+                div.querySelector('.btn-del-row').addEventListener('click', () => {
+                    if (itineraryItems.length > 1) { itineraryItems.splice(index, 1); renderItineraryList(); drawStory(); }
                 });
-
                 itineraryList.appendChild(div);
             });
-
             countBadge.innerText = `${itineraryItems.length}/8`;
             addItineraryBtn.disabled = itineraryItems.length >= 8;
-            addItineraryBtn.innerHTML = itineraryItems.length >= 8 ? 'Max Items Reached' : '<i class="fa-solid fa-plus"></i> Add Item';
+            addItineraryBtn.innerHTML = itineraryItems.length >= 8 ? 'Max' : '<i class="fa-solid fa-plus"></i> Add Item';
         }
 
         addItineraryBtn.addEventListener('click', () => {
-            if (itineraryItems.length < 8) {
-                itineraryItems.push({ t: '00:00', e: 'New Activity' });
-                renderItineraryList();
-                drawStory();
-            }
+            if (itineraryItems.length < 8) { itineraryItems.push({ t: '00:00', e: 'New' }); renderItineraryList(); drawStory(); }
         });
 
-        Sortable.create(itineraryList, {
-            handle: '.drag-handle',
-            animation: 150,
-            onEnd: (evt) => {
-                const item = itineraryItems.splice(evt.oldIndex, 1)[0];
-                itineraryItems.splice(evt.newIndex, 0, item);
-                renderItineraryList();
-                drawStory();
-            }
-        });
+        Sortable.create(itineraryList, { handle: '.drag-handle', animation: 150, onEnd: (evt) => {
+            const item = itineraryItems.splice(evt.oldIndex, 1)[0]; itineraryItems.splice(evt.newIndex, 0, item); renderItineraryList(); drawStory();
+        }});
 
         renderItineraryList();
 
-
-        // --- 2. Sticker System ---
+        // 2. Sticker System (Touch & Mouse)
         stickerUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (evt) => {
-                    const img = new Image();
-                    img.src = evt.target.result;
+                    const img = new Image(); img.src = evt.target.result;
                     img.onload = () => createSticker(img, 150);
                 };
                 reader.readAsDataURL(file);
             }
             e.target.value = '';
         });
+
+        // Helper: Unified Event Position
+        function getPos(e) { return e.touches ? e.touches[0] : e; }
 
         function createSticker(img, size) {
             const sticker = document.createElement('div');
@@ -326,59 +313,82 @@
             sticker.appendChild(btnDel); sticker.appendChild(btnRot); sticker.appendChild(btnSz);
             canvasContainer.appendChild(sticker);
 
-            btnDel.addEventListener('mousedown', (e) => { e.stopPropagation(); sticker.remove(); });
+            // 觸控刪除 (Touch & Click)
+            const removeSticker = (e) => { e.preventDefault(); e.stopPropagation(); sticker.remove(); };
+            btnDel.addEventListener('mousedown', removeSticker);
+            btnDel.addEventListener('touchstart', removeSticker);
 
-            let isMoving = false;
-            sticker.addEventListener('mousedown', (e) => {
-                if(e.target.closest('.sticker-ctrl')) return;
-                isMoving = true; sticker.classList.add('active');
+            // 共用開始拖曳邏輯
+            const startDrag = (e, action) => {
+                e.preventDefault(); e.stopPropagation();
+                sticker.classList.add('active');
+                
+                const startX = getPos(e).clientX;
+                const startY = getPos(e).clientY;
                 const rect = sticker.getBoundingClientRect();
                 const parentRect = canvasContainer.getBoundingClientRect();
-                const offX = e.clientX - rect.left; const offY = e.clientY - rect.top;
+                
+                // For Move
+                const offX = startX - rect.left; 
+                const offY = startY - rect.top;
+
+                // For Rotate
+                const cx = rect.left + rect.width/2;
+                const cy = rect.top + rect.height/2;
+
+                // For Resize
+                const startW = sticker.offsetWidth;
+
                 const onMove = (em) => {
-                    if(!isMoving) return;
-                    let newX = em.clientX - parentRect.left - offX; let newY = em.clientY - parentRect.top - offY;
-                    sticker.style.left = newX + 'px'; sticker.style.top = newY + 'px';
-                };
-                const onUp = () => { isMoving = false; sticker.classList.remove('active'); window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-                window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
-            });
+                    em.preventDefault(); // 防止滾動
+                    const curX = getPos(em).clientX;
+                    const curY = getPos(em).clientY;
 
-            btnRot.addEventListener('mousedown', (e) => {
-                e.stopPropagation(); e.preventDefault(); sticker.classList.add('active');
-                const rect = sticker.getBoundingClientRect();
-                const cx = rect.left + rect.width/2; const cy = rect.top + rect.height/2;
-                const onRotate = (em) => {
-                    const angle = Math.atan2(em.clientY - cy, em.clientX - cx);
-                    const deg = angle * (180 / Math.PI) + 90;
-                    sticker.style.transform = `rotate(${deg}deg)`;
-                    sticker.dataset.angle = deg;
+                    if (action === 'move') {
+                        let newX = curX - parentRect.left - offX;
+                        let newY = curY - parentRect.top - offY;
+                        sticker.style.left = newX + 'px'; sticker.style.top = newY + 'px';
+                    } else if (action === 'rotate') {
+                        const angle = Math.atan2(curY - cy, curX - cx);
+                        const deg = angle * (180 / Math.PI) + 90;
+                        sticker.style.transform = `rotate(${deg}deg)`;
+                        sticker.dataset.angle = deg;
+                    } else if (action === 'resize') {
+                        const newW = Math.max(50, startW + (curX - startX));
+                        sticker.style.width = newW + 'px';
+                        sticker.style.height = (newW * ratio) + 'px';
+                    }
                 };
-                const onUp = () => { sticker.classList.remove('active'); window.removeEventListener('mousemove', onRotate); window.removeEventListener('mouseup', onUp); };
-                window.addEventListener('mousemove', onRotate); window.addEventListener('mouseup', onUp);
-            });
 
-            btnSz.addEventListener('mousedown', (e) => {
-                e.stopPropagation(); sticker.classList.add('active');
-                const startX = e.clientX; const startW = sticker.offsetWidth;
-                const onResize = (em) => {
-                    const newW = Math.max(50, startW + (em.clientX - startX));
-                    sticker.style.width = newW + 'px'; sticker.style.height = (newW * ratio) + 'px';
+                const onEnd = () => {
+                    sticker.classList.remove('active');
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onEnd);
+                    window.removeEventListener('touchmove', onMove);
+                    window.removeEventListener('touchend', onEnd);
                 };
-                const onUp = () => { sticker.classList.remove('active'); window.removeEventListener('mousemove', onResize); window.removeEventListener('mouseup', onUp); };
-                window.addEventListener('mousemove', onResize); window.addEventListener('mouseup', onUp);
-            });
+
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onEnd);
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('touchend', onEnd);
+            };
+
+            // Bind Events
+            sticker.addEventListener('mousedown', (e) => { if(!e.target.closest('.sticker-ctrl')) startDrag(e, 'move'); });
+            sticker.addEventListener('touchstart', (e) => { if(!e.target.closest('.sticker-ctrl')) startDrag(e, 'move'); }, { passive: false });
+
+            btnRot.addEventListener('mousedown', (e) => startDrag(e, 'rotate'));
+            btnRot.addEventListener('touchstart', (e) => startDrag(e, 'rotate'), { passive: false });
+
+            btnSz.addEventListener('mousedown', (e) => startDrag(e, 'resize'));
+            btnSz.addEventListener('touchstart', (e) => startDrag(e, 'resize'), { passive: false });
         }
 
-        // --- 3. Drawing Logic ---
-        
-        // Helper: Hex to RGB string for overlay
+        // 3. Drawing
         function hexToRgb(hex) {
             const bigint = parseInt(hex.slice(1), 16);
-            const r = (bigint >> 16) & 255;
-            const g = (bigint >> 8) & 255;
-            const b = bigint & 255;
-            return `${r},${g},${b}`;
+            return `${(bigint >> 16) & 255},${(bigint >> 8) & 255},${bigint & 255}`;
         }
 
         styleBtns.forEach(btn => {
@@ -386,36 +396,18 @@
                 styleBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentStyle = btn.dataset.style;
-                
-                // Show/Hide Custom Panel
-                if (currentStyle === 'custom') {
-                    customColorPanel.style.display = 'block';
-                } else {
-                    customColorPanel.style.display = 'none';
-                    if(currentStyle === 'classic') opacitySlider.value = 40;
-                    if(currentStyle === 'noir') opacitySlider.value = 75;
-                    if(currentStyle === 'rose') opacitySlider.value = 50;
-                }
+                customColorPanel.style.display = currentStyle === 'custom' ? 'block' : 'none';
+                if(currentStyle === 'classic') opacitySlider.value = 40;
+                if(currentStyle === 'noir') opacitySlider.value = 75;
+                if(currentStyle === 'rose') opacitySlider.value = 50;
                 drawStory();
             });
         });
 
-        // Listen for custom color changes
-        [custBg, custText, custAccent, custLine].forEach(input => {
-            input.addEventListener('input', drawStory);
-        });
-
+        [custBg, custText, custAccent, custLine].forEach(input => input.addEventListener('input', drawStory));
         bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => { customBgImage = img; drawStory(); };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+            if (file) { const reader = new FileReader(); reader.onload = (evt) => { const img = new Image(); img.onload = () => { customBgImage = img; drawStory(); }; img.src = evt.target.result; }; reader.readAsDataURL(file); }
         });
 
         fontSelect.addEventListener('change', drawStory);
@@ -433,35 +425,19 @@
 
             let titleFont, bodyFont, numFont;
             if (fontMode === 'modern') {
-                titleFont = '800 130px "Noto Sans TC", sans-serif';
-                bodyFont = '700 50px "Noto Sans TC", sans-serif';
-                numFont = '700 45px "Noto Sans TC", sans-serif';
+                titleFont = '800 130px "Noto Sans TC", sans-serif'; bodyFont = '700 50px "Noto Sans TC", sans-serif'; numFont = '700 45px "Noto Sans TC", sans-serif';
             } else if (fontMode === 'cute') {
-                titleFont = '700 130px "Zen Maru Gothic", sans-serif';
-                bodyFont = '700 50px "Zen Maru Gothic", sans-serif';
-                numFont = '700 45px "Zen Maru Gothic", sans-serif';
+                titleFont = '700 130px "Zen Maru Gothic", sans-serif'; bodyFont = '700 50px "Zen Maru Gothic", sans-serif'; numFont = '700 45px "Zen Maru Gothic", sans-serif';
             } else { 
-                titleFont = '700 130px "Playfair Display", "Noto Serif TC", serif';
-                bodyFont = '900 50px "Noto Serif TC", serif';
-                numFont = '400 45px "Playfair Display", serif';
+                titleFont = '700 130px "Playfair Display", "Noto Serif TC", serif'; bodyFont = '900 50px "Noto Serif TC", serif'; numFont = '400 45px "Playfair Display", serif';
             }
 
             let colors;
             if (currentStyle === 'custom') {
-                colors = {
-                    bg: custBg.value,
-                    text: custText.value,
-                    accent: custAccent.value,
-                    line: custLine.value,
-                    overlayCol: hexToRgb(custBg.value)
-                };
-            } else if (currentStyle === 'classic') {
-                colors = { bg: '#F9F9F9', text: '#2C2C2C', accent: '#C5A47E', line: '#D1D1D1', overlayCol: '255,255,255' };
-            } else if (currentStyle === 'noir') {
-                colors = { bg: '#121212', text: '#F0F0F0', accent: '#D4AF37', line: '#666666', overlayCol: '0,0,0' };
-            } else if (currentStyle === 'rose') {
-                colors = { bg: '#FFF0F5', text: '#5D3A3A', accent: '#B76E79', line: '#E6C9C9', overlayCol: '255,240,245' };
-            }
+                colors = { bg: custBg.value, text: custText.value, accent: custAccent.value, line: custLine.value, overlayCol: hexToRgb(custBg.value) };
+            } else if (currentStyle === 'classic') { colors = { bg: '#F9F9F9', text: '#2C2C2C', accent: '#C5A47E', line: '#D1D1D1', overlayCol: '255,255,255' }; }
+            else if (currentStyle === 'noir') { colors = { bg: '#121212', text: '#F0F0F0', accent: '#D4AF37', line: '#666666', overlayCol: '0,0,0' }; }
+            else if (currentStyle === 'rose') { colors = { bg: '#FFF0F5', text: '#5D3A3A', accent: '#B76E79', line: '#E6C9C9', overlayCol: '255,240,245' }; }
 
             ctx.clearRect(0, 0, w, h);
             ctx.fillStyle = colors.bg;
@@ -495,7 +471,6 @@
             ctx.beginPath(); ctx.moveTo(timelineX, startY); ctx.lineTo(timelineX, endY);
             ctx.strokeStyle = colors.line; ctx.lineWidth = 2; ctx.stroke();
 
-            // Draw Dynamic Items
             if (itineraryItems.length > 0) {
                 const step = (endY - startY) / (itineraryItems.length > 1 ? itineraryItems.length - 1 : 1);
                 itineraryItems.forEach((item, index) => {
