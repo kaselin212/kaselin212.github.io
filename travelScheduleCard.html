@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelSnap v3.2 - Custom Colors</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@600;900&family=Playfair+Display:ital,wght@0,700;1,400&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
+    <style>
+        :root { --bg: #F3F4F6; --card: #FFFFFF; --text: #1F2937; --accent: #111827; --border: #E5E7EB; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Noto Sans TC', sans-serif; display: flex; justify-content: center; padding: 40px 20px; min-height: 100vh; }
+        
+        .app-layout { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 1280px; }
+        .controls-panel { flex: 1; min-width: 380px; max-width: 480px; background: var(--card); border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 40px; }
+        
+        .header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px; }
+        .header .subtitle { color: #6B7280; font-size: 0.9rem; font-weight: 500; }
+        .section-title { font-size: 0.75rem; font-weight: 700; color: #6B7280; text-transform: uppercase; margin: 24px 0 12px 0; letter-spacing: 0.05em; border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Inputs */
+        input[type="text"], input[type="date"], select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: #F9FAFB; font-size: 1rem; margin-bottom: 12px; outline: none; transition: 0.2s; font-family: inherit; }
+        input:focus, select:focus { background: #fff; border-color: var(--accent); }
+        input[type="text"] { font-weight: 600; }
+
+        /* Itinerary List */
+        .itinerary-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .itinerary-row { display: flex; gap: 8px; align-items: center; background: #fff; padding: 6px; border: 1px solid transparent; border-radius: 6px; transition: 0.2s; }
+        .itinerary-row:hover { background: #F9FAFB; border-color: var(--border); }
+        .drag-handle { cursor: grab; color: #D1D5DB; padding: 8px; display: flex; align-items: center; }
+        .drag-handle:hover { color: var(--accent); }
+        .row-num { font-size: 0.8rem; font-weight: 700; width: 20px; text-align: center; color: #9CA3AF; }
+        
+        input.time-inp { width: 80px !important; text-align: center; margin-bottom: 0 !important; flex-shrink: 0; }
+        input.event-inp { flex: 1; margin-bottom: 0 !important; min-width: 0; }
+        .btn-del-row { color: #EF4444; cursor: pointer; padding: 8px; opacity: 0.3; transition: 0.2s; font-size: 0.9rem; }
+        .btn-del-row:hover { opacity: 1; background: #FEF2F2; border-radius: 4px; }
+        
+        .btn-add-row { width: 100%; padding: 10px; border: 1px dashed var(--border); background: #fff; color: #6B7280; font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-add-row:hover { border-color: var(--accent); color: var(--accent); background: #F9FAFB; }
+        .btn-add-row:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Style Options */
+        .style-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; } /* 改為4欄 */
+        .style-btn { padding: 10px; border: 1px solid var(--border); background: #fff; cursor: pointer; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #6B7280; text-align: center; transition: 0.2s; }
+        .style-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        /* Custom Color Panel */
+        #customColorPanel { display: none; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .color-control { display: flex; align-items: center; gap: 8px; background: #fff; padding: 6px 10px; border-radius: 6px; border: 1px solid #E5E7EB; }
+        .color-control label { font-size: 0.75rem; font-weight: 600; color: #6B7280; flex: 1; }
+        input[type="color"] { width: 24px; height: 24px; border: none; padding: 0; background: none; cursor: pointer; border-radius: 4px; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); }
+
+        /* Controls */
+        .control-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+        .control-row label { font-size: 0.85rem; font-weight: 600; color: var(--text); min-width: 80px; }
+        input[type="range"] { flex: 1; height: 4px; border-radius: 2px; -webkit-appearance: none; background: #ddd; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+
+        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+        .upload-btn { position: relative; cursor: pointer; border: 1px dashed #D1D5DB; border-radius: 8px; padding: 16px; text-align: center; font-size: 0.85rem; color: #6B7280; background: #F9FAFB; transition: 0.2s; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+        .upload-btn:hover { border-color: var(--accent); color: var(--accent); background: #fff; }
+        .upload-btn input { display: none; }
+
+        .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .btn-main:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* Preview */
+        .preview-panel { flex: 1; min-width: 360px; display: flex; flex-direction: column; align-items: center; position: sticky; top: 20px; }
+        .canvas-container { position: relative; width: 360px; height: 640px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); background: #eee; overflow: hidden; border-radius: 4px; }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* Sticker Controls */
+        .floating-sticker { position: absolute; cursor: grab; z-index: 10; display: block; line-height: 0; }
+        .floating-sticker.active { cursor: grabbing; }
+        .floating-sticker img { width: 100%; height: 100%; display: block; pointer-events: none; }
+        .sticker-ctrl { position: absolute; width: 24px; height: 24px; background: #fff; border: 1px solid var(--text); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 20; }
+        .floating-sticker:hover { outline: 1px dashed rgba(255,255,255,0.8); box-shadow: 0 0 0 1px rgba(0,0,0,0.2); }
+        .floating-sticker:hover .sticker-ctrl, .floating-sticker.active .sticker-ctrl { display: flex; }
+        .btn-del { top: -12px; left: -12px; color: #EF4444; border-color: #EF4444; cursor: pointer; }
+        .btn-rot { top: -12px; right: -12px; cursor: crosshair; }
+        .btn-sz  { bottom: -12px; right: -12px; cursor: nwse-resize; }
+
+        .btn-download { margin-top: 20px; width: 360px; background: #fff; border: 1px solid var(--border); color: var(--text); padding: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-download:hover { background: #F9FAFB; border-color: var(--text); }
+
+        @media (max-width: 850px) { .app-layout { flex-direction: column; align-items: center; } .controls-panel { width: 100%; min-width: auto; } .preview-panel { position: relative; top: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <div class="controls-panel">
+        <div class="header">
+            <h1>TravelSnap</h1>
+            <div class="subtitle">Ultimate Story Editor</div>
+        </div>
+
+        <div class="section-title">1. Info</div>
+        <input type="text" id="destInput" placeholder="Destination (e.g. KYOTO)" value="KYOTO">
+        <input type="date" id="dateInput">
+
+        <div class="section-title">
+            2. Itinerary
+            <span id="countBadge" style="font-size:0.7rem; background:#F3F4F6; padding:2px 6px; border-radius:4px;">5/8</span>
+        </div>
+        <div id="itineraryList" class="itinerary-list"></div>
+        <button id="addItineraryBtn" class="btn-add-row"><i class="fa-solid fa-plus"></i> Add Item</button>
+
+        <div class="section-title">3. Look & Feel</div>
+        
+        <div style="margin-bottom:12px;">
+            <select id="fontSelect">
+                <option value="modern">Modern Sans (現代黑體)</option>
+                <option value="serif">Elegant Serif (優雅宋體)</option>
+                <option value="cute">Cute Rounded (可愛圓體)</option>
+            </select>
+        </div>
+
+        <div class="style-grid">
+            <button class="style-btn active" data-style="classic">Classic</button>
+            <button class="style-btn" data-style="noir">Noir</button>
+            <button class="style-btn" data-style="rose">Rose</button>
+            <button class="style-btn" data-style="custom"><i class="fa-solid fa-palette"></i> Custom</button>
+        </div>
+
+        <div id="customColorPanel">
+            <div class="color-grid">
+                <div class="color-control">
+                    <label>Background</label>
+                    <input type="color" id="custBg" value="#EBF4FF">
+                </div>
+                <div class="color-control">
+                    <label>Text</label>
+                    <input type="color" id="custText" value="#1E3A8A">
+                </div>
+                <div class="color-control">
+                    <label>Accent</label>
+                    <input type="color" id="custAccent" value="#3B82F6">
+                </div>
+                <div class="color-control">
+                    <label>Line</label>
+                    <input type="color" id="custLine" value="#BFDBFE">
+                </div>
+            </div>
+            <div style="font-size:0.7rem; color:#9CA3AF; margin-top:8px; text-align:center;">Overlay color auto-calculated from BG</div>
+        </div>
+
+        <div class="control-row">
+            <label>Overlay</label>
+            <input type="range" id="opacitySlider" min="0" max="100" value="40">
+        </div>
+        <div class="control-row">
+            <label>Bg Fit</label>
+            <select id="bgFitSelect" style="margin-bottom:0;">
+                <option value="cover">Cover (裁切填滿)</option>
+                <option value="contain">Contain (完整顯示)</option>
+            </select>
+        </div>
+
+        <div class="section-title">4. Assets</div>
+        <div class="upload-grid">
+            <label class="upload-btn">
+                <i class="fa-solid fa-image"></i>
+                <span>Background</span>
+                <input type="file" id="bgUpload" accept="image/*">
+            </label>
+            <label class="upload-btn">
+                <i class="fa-solid fa-note-sticky"></i>
+                <span>Add Sticker</span>
+                <input type="file" id="stickerUpload" accept="image/png, image/jpeg">
+            </label>
+        </div>
+
+        <button id="refreshBtn" class="btn-main">Update Preview</button>
+    </div>
+
+    <div class="preview-panel">
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="storyCanvas" width="1080" height="1920"></canvas>
+        </div>
+        <button id="downloadBtn" class="btn-download"><i class="fa-solid fa-download"></i> Download Image</button>
+        <div style="font-size:0.75rem; color:#9CA3AF; margin-top:10px;">Sticker Controls: ❌ Delete • ↻ Rotate • ⤡ Resize</div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const destInput = document.getElementById('destInput');
+        const dateInput = document.getElementById('dateInput');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const canvas = document.getElementById('storyCanvas');
+        const ctx = canvas.getContext('2d');
+        const itineraryList = document.getElementById('itineraryList');
+        const addItineraryBtn = document.getElementById('addItineraryBtn');
+        const countBadge = document.getElementById('countBadge');
+        const bgUpload = document.getElementById('bgUpload');
+        const stickerUpload = document.getElementById('stickerUpload');
+        const styleBtns = document.querySelectorAll('.style-btn');
+        const fontSelect = document.getElementById('fontSelect');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const bgFitSelect = document.getElementById('bgFitSelect');
+        const canvasContainer = document.getElementById('canvasContainer');
+        
+        // Custom Color Inputs
+        const customColorPanel = document.getElementById('customColorPanel');
+        const custBg = document.getElementById('custBg');
+        const custText = document.getElementById('custText');
+        const custAccent = document.getElementById('custAccent');
+        const custLine = document.getElementById('custLine');
+
+        let currentStyle = 'classic';
+        let customBgImage = null;
+        let overlayOpacity = 0.4;
+        dateInput.valueAsDate = new Date();
+
+        // --- 1. Dynamic Itinerary Logic ---
+        let itineraryItems = [
+            { t: '09:00', e: '清水寺參拜' },
+            { t: '11:00', e: '二年坂星巴克' },
+            { t: '13:00', e: '鴨川野餐' },
+            { t: '16:00', e: '錦市場吃透透' },
+            { t: '19:00', e: '先斗町晚餐' }
+        ];
+
+        function renderItineraryList() {
+            itineraryList.innerHTML = '';
+            itineraryItems.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'itinerary-row';
+                const delStyle = itineraryItems.length <= 1 ? 'visibility:hidden;' : '';
+                
+                div.innerHTML = `
+                    <div class="drag-handle"><i class="fa-solid fa-bars"></i></div>
+                    <div class="row-num">${index + 1}</div>
+                    <input type="text" class="time-inp" value="${item.t}">
+                    <input type="text" class="event-inp" value="${item.e}">
+                    <i class="fa-solid fa-trash-can btn-del-row" style="${delStyle}"></i>
+                `;
+                
+                const timeInput = div.querySelector('.time-inp');
+                const eventInput = div.querySelector('.event-inp');
+                const delBtn = div.querySelector('.btn-del-row');
+
+                timeInput.addEventListener('input', (e) => { itineraryItems[index].t = e.target.value; drawStory(); });
+                eventInput.addEventListener('input', (e) => { itineraryItems[index].e = e.target.value; drawStory(); });
+                
+                delBtn.addEventListener('click', () => {
+                    if (itineraryItems.length > 1) {
+                        itineraryItems.splice(index, 1);
+                        renderItineraryList();
+                        drawStory();
+                    }
+                });
+
+                itineraryList.appendChild(div);
+            });
+
+            countBadge.innerText = `${itineraryItems.length}/8`;
+            addItineraryBtn.disabled = itineraryItems.length >= 8;
+            addItineraryBtn.innerHTML = itineraryItems.length >= 8 ? 'Max Items Reached' : '<i class="fa-solid fa-plus"></i> Add Item';
+        }
+
+        addItineraryBtn.addEventListener('click', () => {
+            if (itineraryItems.length < 8) {
+                itineraryItems.push({ t: '00:00', e: 'New Activity' });
+                renderItineraryList();
+                drawStory();
+            }
+        });
+
+        Sortable.create(itineraryList, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: (evt) => {
+                const item = itineraryItems.splice(evt.oldIndex, 1)[0];
+                itineraryItems.splice(evt.newIndex, 0, item);
+                renderItineraryList();
+                drawStory();
+            }
+        });
+
+        renderItineraryList();
+
+
+        // --- 2. Sticker System ---
+        stickerUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const img = new Image();
+                    img.src = evt.target.result;
+                    img.onload = () => createSticker(img, 150);
+                };
+                reader.readAsDataURL(file);
+            }
+            e.target.value = '';
+        });
+
+        function createSticker(img, size) {
+            const sticker = document.createElement('div');
+            sticker.className = 'floating-sticker';
+            sticker.style.width = size + 'px';
+            const ratio = img.height / img.width;
+            sticker.style.height = (size * ratio) + 'px';
+            sticker.style.left = '100px'; sticker.style.top = '300px';
+            sticker.dataset.angle = '0'; 
+
+            sticker.appendChild(img);
+            const btnDel = document.createElement('div'); btnDel.className = 'sticker-ctrl btn-del'; btnDel.innerHTML = '<i class="fa-solid fa-times"></i>';
+            const btnRot = document.createElement('div'); btnRot.className = 'sticker-ctrl btn-rot'; btnRot.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
+            const btnSz = document.createElement('div'); btnSz.className = 'sticker-ctrl btn-sz'; btnSz.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            
+            sticker.appendChild(btnDel); sticker.appendChild(btnRot); sticker.appendChild(btnSz);
+            canvasContainer.appendChild(sticker);
+
+            btnDel.addEventListener('mousedown', (e) => { e.stopPropagation(); sticker.remove(); });
+
+            let isMoving = false;
+            sticker.addEventListener('mousedown', (e) => {
+                if(e.target.closest('.sticker-ctrl')) return;
+                isMoving = true; sticker.classList.add('active');
+                const rect = sticker.getBoundingClientRect();
+                const parentRect = canvasContainer.getBoundingClientRect();
+                const offX = e.clientX - rect.left; const offY = e.clientY - rect.top;
+                const onMove = (em) => {
+                    if(!isMoving) return;
+                    let newX = em.clientX - parentRect.left - offX; let newY = em.clientY - parentRect.top - offY;
+                    sticker.style.left = newX + 'px'; sticker.style.top = newY + 'px';
+                };
+                const onUp = () => { isMoving = false; sticker.classList.remove('active'); window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+                window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
+            });
+
+            btnRot.addEventListener('mousedown', (e) => {
+                e.stopPropagation(); e.preventDefault(); sticker.classList.add('active');
+                const rect = sticker.getBoundingClientRect();
+                const cx = rect.left + rect.width/2; const cy = rect.top + rect.height/2;
+                const onRotate = (em) => {
+                    const angle = Math.atan2(em.clientY - cy, em.clientX - cx);
+                    const deg = angle * (180 / Math.PI) + 90;
+                    sticker.style.transform = `rotate(${deg}deg)`;
+                    sticker.dataset.angle = deg;
+                };
+                const onUp = () => { sticker.classList.remove('active'); window.removeEventListener('mousemove', onRotate); window.removeEventListener('mouseup', onUp); };
+                window.addEventListener('mousemove', onRotate); window.addEventListener('mouseup', onUp);
+            });
+
+            btnSz.addEventListener('mousedown', (e) => {
+                e.stopPropagation(); sticker.classList.add('active');
+                const startX = e.clientX; const startW = sticker.offsetWidth;
+                const onResize = (em) => {
+                    const newW = Math.max(50, startW + (em.clientX - startX));
+                    sticker.style.width = newW + 'px'; sticker.style.height = (newW * ratio) + 'px';
+                };
+                const onUp = () => { sticker.classList.remove('active'); window.removeEventListener('mousemove', onResize); window.removeEventListener('mouseup', onUp); };
+                window.addEventListener('mousemove', onResize); window.addEventListener('mouseup', onUp);
+            });
+        }
+
+        // --- 3. Drawing Logic ---
+        
+        // Helper: Hex to RGB string for overlay
+        function hexToRgb(hex) {
+            const bigint = parseInt(hex.slice(1), 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `${r},${g},${b}`;
+        }
+
+        styleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                styleBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentStyle = btn.dataset.style;
+                
+                // Show/Hide Custom Panel
+                if (currentStyle === 'custom') {
+                    customColorPanel.style.display = 'block';
+                } else {
+                    customColorPanel.style.display = 'none';
+                    if(currentStyle === 'classic') opacitySlider.value = 40;
+                    if(currentStyle === 'noir') opacitySlider.value = 75;
+                    if(currentStyle === 'rose') opacitySlider.value = 50;
+                }
+                drawStory();
+            });
+        });
+
+        // Listen for custom color changes
+        [custBg, custText, custAccent, custLine].forEach(input => {
+            input.addEventListener('input', drawStory);
+        });
+
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => { customBgImage = img; drawStory(); };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        fontSelect.addEventListener('change', drawStory);
+        opacitySlider.addEventListener('input', drawStory);
+        bgFitSelect.addEventListener('change', drawStory);
+        refreshBtn.addEventListener('click', drawStory);
+
+        function drawStory(finalExport = false) {
+            const w = canvas.width; const h = canvas.height;
+            const dest = destInput.value.toUpperCase() || 'DESTINATION';
+            const dateVal = dateInput.value;
+            const fontMode = fontSelect.value;
+            const bgFit = bgFitSelect.value;
+            overlayOpacity = opacitySlider.value / 100;
+
+            let titleFont, bodyFont, numFont;
+            if (fontMode === 'modern') {
+                titleFont = '800 130px "Noto Sans TC", sans-serif';
+                bodyFont = '700 50px "Noto Sans TC", sans-serif';
+                numFont = '700 45px "Noto Sans TC", sans-serif';
+            } else if (fontMode === 'cute') {
+                titleFont = '700 130px "Zen Maru Gothic", sans-serif';
+                bodyFont = '700 50px "Zen Maru Gothic", sans-serif';
+                numFont = '700 45px "Zen Maru Gothic", sans-serif';
+            } else { 
+                titleFont = '700 130px "Playfair Display", "Noto Serif TC", serif';
+                bodyFont = '900 50px "Noto Serif TC", serif';
+                numFont = '400 45px "Playfair Display", serif';
+            }
+
+            let colors;
+            if (currentStyle === 'custom') {
+                colors = {
+                    bg: custBg.value,
+                    text: custText.value,
+                    accent: custAccent.value,
+                    line: custLine.value,
+                    overlayCol: hexToRgb(custBg.value)
+                };
+            } else if (currentStyle === 'classic') {
+                colors = { bg: '#F9F9F9', text: '#2C2C2C', accent: '#C5A47E', line: '#D1D1D1', overlayCol: '255,255,255' };
+            } else if (currentStyle === 'noir') {
+                colors = { bg: '#121212', text: '#F0F0F0', accent: '#D4AF37', line: '#666666', overlayCol: '0,0,0' };
+            } else if (currentStyle === 'rose') {
+                colors = { bg: '#FFF0F5', text: '#5D3A3A', accent: '#B76E79', line: '#E6C9C9', overlayCol: '255,240,245' };
+            }
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = colors.bg;
+            ctx.fillRect(0, 0, w, h);
+
+            if (customBgImage) {
+                if (bgFit === 'cover') {
+                    const imgRatio = customBgImage.width / customBgImage.height;
+                    const canvasRatio = w / h;
+                    let sw, sh, sx, sy;
+                    if (imgRatio > canvasRatio) { sh = customBgImage.height; sw = sh * canvasRatio; sy = 0; sx = (customBgImage.width - sw) / 2; } 
+                    else { sw = customBgImage.width; sh = sw / canvasRatio; sx = 0; sy = (customBgImage.height - sh) / 2; }
+                    ctx.drawImage(customBgImage, sx, sy, sw, sh, 0, 0, w, h);
+                } else {
+                    const scale = Math.min(w / customBgImage.width, h / customBgImage.height);
+                    const dw = customBgImage.width * scale; const dh = customBgImage.height * scale;
+                    const dx = (w - dw) / 2; const dy = (h - dh) / 2;
+                    ctx.drawImage(customBgImage, dx, dy, dw, dh);
+                }
+                ctx.fillStyle = `rgba(${colors.overlayCol}, ${overlayOpacity})`;
+                ctx.fillRect(0, 0, w, h);
+            }
+
+            ctx.textAlign = 'center'; ctx.fillStyle = colors.text; ctx.font = titleFont; ctx.letterSpacing = '-2px';
+            ctx.fillText(dest, w/2, 280);
+            ctx.font = fontMode === 'cute' ? '500 45px "Zen Maru Gothic"' : 'italic 400 45px "Playfair Display"';
+            ctx.fillStyle = colors.accent;
+            ctx.fillText(dateVal.replace(/-/g, '.'), w/2, 350);
+
+            const startY = 550; const endY = 1450; const timelineX = 220; 
+            ctx.beginPath(); ctx.moveTo(timelineX, startY); ctx.lineTo(timelineX, endY);
+            ctx.strokeStyle = colors.line; ctx.lineWidth = 2; ctx.stroke();
+
+            // Draw Dynamic Items
+            if (itineraryItems.length > 0) {
+                const step = (endY - startY) / (itineraryItems.length > 1 ? itineraryItems.length - 1 : 1);
+                itineraryItems.forEach((item, index) => {
+                    const y = itineraryItems.length > 1 ? startY + (step * index) : (startY + endY) / 2;
+                    ctx.beginPath(); ctx.arc(timelineX, y, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = colors.bg; ctx.fill();
+                    ctx.lineWidth = 3; ctx.strokeStyle = colors.accent; ctx.stroke();
+                    ctx.textAlign = 'right'; ctx.fillStyle = colors.accent; ctx.font = numFont;
+                    ctx.fillText(item.t, timelineX - 40, y + 12);
+                    ctx.textAlign = 'left'; ctx.fillStyle = colors.text; ctx.font = bodyFont;
+                    wrapText(ctx, item.e, timelineX + 60, y - 10, w - timelineX - 100, 70);
+                });
+            }
+
+            ctx.textAlign = 'center'; ctx.font = '500 30px "Inter"'; ctx.fillStyle = colors.text;
+            ctx.globalAlpha = 0.6; ctx.fillText('Design by @_anshao_', w/2, h - 80); ctx.globalAlpha = 1.0;
+
+            if (finalExport) {
+                const stickers = document.querySelectorAll('.floating-sticker');
+                const scaleFactor = 1080 / canvasContainer.offsetWidth; 
+                stickers.forEach(stickerDiv => {
+                    const rect = stickerDiv.getBoundingClientRect();
+                    const containerRect = canvasContainer.getBoundingClientRect();
+                    const x = (rect.left - containerRect.left) * scaleFactor;
+                    const y = (rect.top - containerRect.top) * scaleFactor;
+                    const w = stickerDiv.offsetWidth * scaleFactor;
+                    const h = stickerDiv.offsetHeight * scaleFactor;
+                    const angleDeg = parseFloat(stickerDiv.dataset.angle || 0);
+                    const angleRad = angleDeg * Math.PI / 180;
+                    const imgEl = stickerDiv.querySelector('img');
+                    if (imgEl) {
+                        ctx.save(); ctx.translate(x + w/2, y + h/2); ctx.rotate(angleRad);
+                        ctx.drawImage(imgEl, -w/2, -h/2, w, h); ctx.restore();
+                    }
+                });
+            }
+        }
+
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(''); let line = ''; let currentY = y - (lineHeight * 0.3);
+            if(context.measureText(text).width < maxWidth) { context.fillText(text, x, y + 18); return; }
+            for(let n = 0; n < words.length; n++) {
+                const testLine = line + words[n];
+                if (context.measureText(testLine).width > maxWidth && n > 0) { context.fillText(line, x, currentY); line = words[n]; currentY += lineHeight; } else { line = testLine; }
+            }
+            context.fillText(line, x, currentY);
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            drawStory(true);
+            const link = document.createElement('a');
+            link.download = `TravelSnap_${destInput.value}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            setTimeout(() => drawStory(false), 200);
+        });
+
+        document.fonts.ready.then(drawStory);
+        setTimeout(drawStory, 500);
+    });
+</script>
+</body>
+</html>
