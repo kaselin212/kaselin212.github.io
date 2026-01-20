@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiboSnap - Force Update</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* CSS 樣式維持不變 */
+        :root { --bg-body: #F3F5F9; --bg-card: #FFFFFF; --text-primary: #111827; --text-secondary: #6B7280; --text-accent: #10B981; --btn-bg: #1F2937; --btn-text: #FFFFFF; --input-bg: #F9FAFB; --border-light: #E5E7EB; --shadow-card: 0 20px 40px -5px rgba(0, 0, 0, 0.05); --radius-xl: 24px; --radius-md: 12px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-body); color: var(--text-primary); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background-image: radial-gradient(#E5E7EB 1px, transparent 1px); background-size: 24px 24px; }
+        .app-container { width: 100%; max-width: 460px; background-color: var(--bg-card); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); padding: 32px 28px; position: relative; }
+        .header h1 { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 4px; }
+        .header .subtitle { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+        .badge { background: #D1FAE5; color: #065F46; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; vertical-align: middle; margin-left: 8px; }
+        .search-container { position: relative; margin-top: 24px; margin-bottom: 24px; z-index: 100; }
+        .search-input-wrapper { position: relative; }
+        .search-input-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 0.9rem; }
+        .stock-input { width: 100%; padding: 14px 14px 14px 40px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: 'Inter'; font-weight: 600; text-transform: uppercase; outline: none; background: var(--input-bg); transition: 0.2s; }
+        .stock-input:focus { background: #fff; border-color: var(--text-accent); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+        .suggestions-box { position: absolute; top: 110%; left: 0; right: 0; background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-md); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); max-height: 250px; overflow-y: auto; display: none; }
+        .suggestion-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background-color: #F0FDF4; color: #065F46; }
+        .s-symbol { font-weight: 700; font-size: 0.95rem; }
+        .s-price { font-size: 0.8rem; color: var(--text-secondary); }
+        .time-selector { display: flex; justify-content: space-between; background: var(--input-bg); padding: 4px; border-radius: var(--radius-md); margin-bottom: 24px; border: 1px solid var(--border-light); opacity: 0.5; pointer-events: none; transition: 0.3s; }
+        .time-selector.active { opacity: 1; pointer-events: all; }
+        .time-pill { flex: 1; border: none; background: transparent; color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; padding: 8px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-family: 'Inter'; }
+        .time-pill:hover { color: var(--text-primary); }
+        .time-pill.selected { background: #fff; color: var(--text-accent); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-weight: 700; }
+        .mode-toggle { display: flex; gap: 4px; background: var(--input-bg); padding: 4px; border-radius: var(--radius-md); margin-bottom: 20px; border: 1px solid var(--border-light); }
+        .mode-toggle input { display: none; }
+        .mode-toggle label { flex: 1; text-align: center; padding: 10px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .mode-toggle input:checked + label { background: var(--bg-card); color: var(--text-accent); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .price-input { width: 100%; background: var(--input-bg); border: 1px solid var(--border-light); padding: 14px; font-size: 1rem; font-weight: 600; border-radius: var(--radius-md); outline: none; transition: 0.2s; color: var(--text-primary); font-family: 'Inter'; }
+        .updated { animation: flash 0.5s ease; }
+        @keyframes flash { 0% { background-color: rgba(16, 185, 129, 0.2); } 100% { background-color: var(--input-bg); } }
+        .btn-main { width: 100%; background: var(--btn-bg); color: #fff; border: none; padding: 16px; font-size: 1rem; font-weight: 700; border-radius: var(--radius-md); cursor: pointer; transition: transform 0.1s; }
+        .btn-main:active { transform: scale(0.98); }
+        .results-section { margin-top: 32px; display: none; animation: slideUp 0.4s ease forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chart-wrapper { background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        canvas { display: block; width: 100%; height: auto; }
+        .btn-download { margin-top: 16px; width: 100%; background: transparent; border: 1px dashed var(--border-light); color: var(--text-secondary); padding: 12px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-download:hover { background: var(--input-bg); color: var(--text-primary); border-color: var(--text-secondary); }
+        .api-note { font-size: 0.7rem; color: var(--text-secondary); margin-top: 8px; text-align: center; display: flex; justify-content: space-between; }
+        .error-msg { color: #EF4444; font-size: 0.8rem; margin-bottom: 16px; display: none; background: #FEF2F2; padding: 10px; border-radius: 8px; border-left: 3px solid #EF4444; }
+        #refreshBtn { background: none; border: none; color: var(--text-accent); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <h1>FiboSnap.<span class="badge">LIVE</span></h1>
+            <div class="subtitle">Multi-Timeframe Analytics</div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="symbolInput" class="stock-input" placeholder="Initializing..." disabled autocomplete="off">
+            </div>
+            <div id="suggestionsBox" class="suggestions-box"></div>
+        </div>
+
+        <div id="timeSelector" class="time-selector">
+            <button class="time-pill selected" data-tf="1D">1 DAY</button>
+            <button class="time-pill" data-tf="1W">1 WEEK</button>
+            <button class="time-pill" data-tf="1M">1 MONTH</button>
+            <button class="time-pill" data-tf="1Y">1 YEAR</button>
+        </div>
+
+        <div class="api-note">
+            <span id="statusText">Connecting...</span>
+            <button id="refreshBtn">↻ Force Refresh</button>
+        </div>
+
+        <div class="mode-toggle" style="margin-top:10px;">
+            <input type="radio" id="modeRetrace" name="calcMode" checked>
+            <label for="modeRetrace">Retracement (Support)</label>
+            <input type="radio" id="modeBounce" name="calcMode">
+            <label for="modeBounce">Bounce (Resistance)</label>
+        </div>
+
+        <div id="errorMsg" class="error-msg">⚠️ High price must be greater than Low price.</div>
+
+        <div class="input-grid">
+            <div class="input-group">
+                <label id="labelHigh">1D High</label>
+                <input type="number" id="highPrice" class="price-input" placeholder="0.00" step="0.01">
+            </div>
+            <div class="input-group">
+                <label id="labelLow">1D Low</label>
+                <input type="number" id="lowPrice" class="price-input" placeholder="0.00" step="0.01">
+            </div>
+        </div>
+
+        <button id="calcBtn" class="btn-main">Analyze Chart</button>
+
+        <div id="resultsSection" class="results-section">
+            <div class="chart-wrapper">
+                <canvas id="fibChart" width="800" height="1000"></canvas>
+            </div>
+            <button id="downloadBtn" class="btn-download">
+                <i class="fa-solid fa-download"></i> Download Image
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const SHEET_ID = '2PACX-1vRX8E6W0aNikRglystUxgqgeSKtX9U5yqz5V2YQ3rxzWEoT3VWWkGaPQMDOCq1BR3ZB_Z1uz5nRuenf';
+            const ORIGINAL_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv`;
+
+            const symbolInput = document.getElementById('symbolInput');
+            const suggestionsBox = document.getElementById('suggestionsBox');
+            const statusText = document.getElementById('statusText');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const highInput = document.getElementById('highPrice');
+            const lowInput = document.getElementById('lowPrice');
+            const calcBtn = document.getElementById('calcBtn');
+            const resultsSection = document.getElementById('resultsSection');
+            const errorMsg = document.getElementById('errorMsg');
+            const chartCanvas = document.getElementById('fibChart');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const ctx = chartCanvas.getContext('2d');
+            const modeRadios = document.getElementsByName('calcMode');
+            const timeSelector = document.getElementById('timeSelector');
+            const timePills = document.querySelectorAll('.time-pill');
+            const labelHigh = document.getElementById('labelHigh');
+            const labelLow = document.getElementById('labelLow');
+
+            let stockDatabase = [];
+            let currentStock = null; 
+            let currentTimeframe = '1D';
+
+            async function initData() {
+                symbolInput.disabled = true;
+                symbolInput.placeholder = "Loading Sheets Data...";
+                statusText.textContent = "Syncing...";
+                
+                try {
+                    // --- 關鍵修改：加入時間戳記來強制更新 ---
+                    const timestamp = new Date().getTime();
+                    const bustUrl = ORIGINAL_URL + '&t=' + timestamp;
+                    // 使用 Proxy 讀取帶有時間戳的網址
+                    const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(bustUrl);
+
+                    const response = await fetch(PROXY_URL);
+                    if (!response.ok) throw new Error("Connection failed");
+                    const csvText = await response.text();
+                    
+                    const rows = csvText.split(/\r?\n/).map(row => row.split(','));
+                    stockDatabase = [];
+
+                    // 檢查是否真的讀到 9 欄 (除錯用)
+                    if (rows[0].length < 9) {
+                        console.warn("Warning: Received CSV only has " + rows[0].length + " columns. Google cache might be stale.");
+                    }
+
+                    // [0]Symbol, [1]H_1D, [2]L_1D, [3]H_1W, [4]L_1W, [5]H_1M, [6]L_1M, [7]H_1Y, [8]L_1Y
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row.length < 3) continue; // 至少要有 Symbol, H, L
+
+                        const symbol = clean(row[0]);
+                        if (!symbol) continue;
+
+                        stockDatabase.push({
+                            symbol: symbol,
+                            '1D': { h: cleanNum(row[1]), l: cleanNum(row[2]) },
+                            // 使用防呆機制：如果後面欄位還沒讀到，就先填入 0
+                            '1W': { h: cleanNum(row[3]), l: cleanNum(row[4]) },
+                            '1M': { h: cleanNum(row[5]), l: cleanNum(row[6]) },
+                            '1Y': { h: cleanNum(row[7]), l: cleanNum(row[8]) }
+                        });
+                    }
+                    
+                    symbolInput.disabled = false;
+                    symbolInput.placeholder = "Type to search (e.g. 2330)";
+                    statusText.textContent = `${stockDatabase.length} stocks ready.`;
+                    
+                } catch (err) {
+                    console.error(err);
+                    statusText.textContent = "Connection Error.";
+                }
+            }
+
+            function clean(str) { return str ? str.replace(/['"]+/g, '').trim() : ''; }
+            function cleanNum(str) { 
+                if (str === undefined) return 0; // 防止 undefined
+                const n = parseFloat(clean(str)); 
+                return isNaN(n) ? 0 : n; 
+            }
+
+            symbolInput.addEventListener('input', function() {
+                const query = this.value.toUpperCase().trim();
+                suggestionsBox.innerHTML = ''; 
+                if (query.length === 0) { suggestionsBox.style.display = 'none'; return; }
+
+                const matches = stockDatabase.filter(stock => stock.symbol.toUpperCase().includes(query));
+
+                if (matches.length > 0) {
+                    suggestionsBox.style.display = 'block';
+                    matches.forEach(stock => {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+                        div.innerHTML = `<span class="s-symbol">${stock.symbol}</span><span class="s-price">Today: ${stock['1D'].h}</span>`;
+                        div.onclick = () => selectStock(stock);
+                        suggestionsBox.appendChild(div);
+                    });
+                } else {
+                    suggestionsBox.style.display = 'block';
+                    suggestionsBox.innerHTML = `<div style="padding:12px; color:#999; font-size:0.9rem;">No matches</div>`;
+                }
+            });
+
+            function selectStock(stock) {
+                currentStock = stock;
+                symbolInput.value = stock.symbol;
+                suggestionsBox.style.display = 'none';
+                timeSelector.classList.add('active');
+                setActiveTimeframe('1D'); 
+            }
+
+            timePills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    if(!currentStock) return;
+                    setActiveTimeframe(pill.dataset.tf);
+                });
+            });
+
+            function setActiveTimeframe(tf) {
+                currentTimeframe = tf;
+                timePills.forEach(p => p.classList.remove('selected'));
+                document.querySelector(`.time-pill[data-tf="${tf}"]`).classList.add('selected');
+                
+                labelHigh.textContent = `${tf} High`;
+                labelLow.textContent = `${tf} Low`;
+
+                if (currentStock && currentStock[tf]) {
+                    const data = currentStock[tf];
+                    
+                    // 防呆：如果讀到 0，提示使用者但不要報錯
+                    if (data.h === 0 || data.l === 0) {
+                        // 嘗試顯示，但提示可能數據未同步
+                        statusText.textContent = `Warning: ${tf} data missing in CSV`;
+                        // 還是讓使用者可以手動輸入，不清空欄位
+                    } else {
+                        highInput.value = data.h;
+                        lowInput.value = data.l;
+                        flashInput();
+                        calcBtn.click(); 
+                    }
+                }
+            }
+
+            document.addEventListener('click', function(e) {
+                if (!symbolInput.contains(e.target) && !suggestionsBox.contains(e.target)) suggestionsBox.style.display = 'none';
+            });
+            symbolInput.addEventListener('focus', function() {
+                if(this.value.trim() !== "") this.dispatchEvent(new Event('input'));
+            });
+            refreshBtn.addEventListener('click', initData);
+            
+            // 啟動
+            initData();
+
+            function flashInput() {
+                highInput.classList.remove('updated');
+                lowInput.classList.remove('updated');
+                void highInput.offsetWidth;
+                highInput.classList.add('updated');
+                lowInput.classList.add('updated');
+            }
+
+            const fibLevels = [0.5, 0.618, 0.786];
+            let isBounceMode = false;
+            modeRadios.forEach(r => r.addEventListener('change', (e) => {
+                isBounceMode = e.target.id === 'modeBounce';
+                resultsSection.style.display = 'none';
+            }));
+
+            calcBtn.addEventListener('click', () => {
+                const high = parseFloat(highInput.value);
+                const low = parseFloat(lowInput.value);
+                const symbol = symbolInput.value.toUpperCase() || 'DATA';
+
+                if (isNaN(high) || isNaN(low)) return;
+                if (low >= high) {
+                    errorMsg.style.display = 'block';
+                    resultsSection.style.display = 'none';
+                    return;
+                } else { errorMsg.style.display = 'none'; }
+
+                const diff = high - low;
+                let chartData = [];
+                fibLevels.forEach(level => {
+                    let price = isBounceMode ? low + (diff * level) : high - (diff * level);
+                    chartData.push({ level, price, formattedPrice: price.toFixed(2), isGolden: level === 0.618 });
+                });
+
+                chartData.sort((a, b) => b.price - a.price);
+                resultsSection.style.display = 'block';
+                requestAnimationFrame(() => drawSchematicChart(high, low, chartData, symbol));
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = `FiboSnap_${symbolInput.value}_${currentTimeframe}.png`;
+                link.href = chartCanvas.toDataURL('image/png');
+                link.click();
+            });
+
+            function drawSchematicChart(high, low, sortedData, symbol) {
+                const width = chartCanvas.width;
+                const height = chartCanvas.height;
+                const padding = { top: 140, bottom: 80, left: 40, right: 40 };
+                ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, width, height);
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#9CA3AF'; ctx.font = '600 24px "Inter"'; ctx.fillText(`${currentTimeframe} HIGH`, padding.left, 50);
+                ctx.fillStyle = '#111827'; ctx.font = '700 40px "Inter"'; ctx.fillText(high.toFixed(2), padding.left, 95);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#9CA3AF'; ctx.font = '600 24px "Inter"'; ctx.fillText(`${currentTimeframe} LOW`, width - padding.right, 50);
+                ctx.fillStyle = '#111827'; ctx.font = '700 40px "Inter"'; ctx.fillText(low.toFixed(2), width - padding.right, 95);
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.font = '900 150px "Inter"'; ctx.fillStyle = 'rgba(0,0,0,0.03)';
+                const displaySymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+                ctx.fillText(displaySymbol, width/2, height/2);
+                ctx.restore();
+                ctx.beginPath(); ctx.moveTo(padding.left, 130); ctx.lineTo(width - padding.right, 130);
+                ctx.strokeStyle = '#F3F4F6'; ctx.lineWidth = 3; ctx.stroke();
+                const drawingAreaHeight = height - padding.top - padding.bottom;
+                const stepY = drawingAreaHeight / 4;
+                sortedData.forEach((item, index) => {
+                    const y = padding.top + (stepY * (index + 1));
+                    ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(width - padding.right, y);
+                    if (item.isGolden) { ctx.strokeStyle = '#D97706'; ctx.lineWidth = 4; } 
+                    else { ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 2; ctx.setLineDash([8, 8]); }
+                    ctx.stroke(); ctx.setLineDash([]);
+                    const textY = y - 10;
+                    ctx.textBaseline = 'bottom';
+                    if (item.isGolden) {
+                        ctx.textAlign = 'right'; ctx.font = '900 90px "Inter"'; ctx.fillStyle = '#D97706';
+                        ctx.fillText(item.formattedPrice, width - padding.right, textY);
+                        ctx.textAlign = 'left'; ctx.font = '600 30px "Inter"';
+                        ctx.fillText(`Fib ${item.level} (Golden)`, padding.left, textY - 10);
+                    } else {
+                        ctx.textAlign = 'left'; ctx.font = '700 48px "Inter"'; ctx.fillStyle = '#4B5563';
+                        ctx.fillText(item.formattedPrice, padding.left, textY);
+                        const m = ctx.measureText(item.formattedPrice);
+                        ctx.font = '500 20px "Inter"'; ctx.fillStyle = '#9CA3AF';
+                        ctx.fillText(`Fib ${item.level}`, padding.left + m.width + 20, textY - 8);
+                    }
+                });
+                ctx.textAlign = 'center'; ctx.font = '500 16px "Inter"'; ctx.fillStyle = '#9CA3AF';
+                ctx.fillText(`PERIOD: ${currentTimeframe} • GOOGLE SHEETS DB`, width / 2, height - 20);
+                const now = new Date();
+                const timeStr = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+                ctx.textAlign = 'right'; ctx.fillText(timeStr, width - padding.right, height - 20);
+            }
+        });
+    </script>
+</body>
+</html>
