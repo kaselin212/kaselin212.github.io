@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora Studio (Demo)</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1d; 
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --accent-color: #a5b4fc;
+            --danger-color: #f87171;
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --premium-color: #fbbf24; /* 金色用於付費按鈕 */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            height: 100%;
+        }
+
+        /* Canvas 容器 */
+        .canvas-wrapper {
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            width: 600px;
+            height: 600px;
+            background: #000;
+            border: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .noise-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 5;
+            mix-blend-mode: overlay;
+        }
+
+        canvas { width: 100%; height: 100%; display: block; background: transparent; }
+
+        /* 控制面板 */
+        .controls {
+            width: 360px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 25px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls::-webkit-scrollbar { width: 6px; }
+        .controls::-webkit-scrollbar-track { background: transparent; }
+        .controls::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        h1 {
+            font-size: 1.1rem; font-weight: 600; margin-bottom: 5px;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .badge {
+            font-size: 0.7rem; background: rgba(255,255,255,0.1); 
+            padding: 2px 8px; border-radius: 10px; color: #aaa; border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        h2 {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
+            color: rgba(255,255,255,0.4); margin-top: 10px; margin-bottom: 5px;
+        }
+
+        label {
+            font-size: 0.8rem; color: rgba(255, 255, 255, 0.8);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        /* 鎖定狀態的 Label 樣式 */
+        label.locked { opacity: 0.5; cursor: not-allowed; }
+        label.locked::after { content: "🔒"; font-size: 0.8rem; margin-left: 5px; }
+
+        .value-tag { font-family: monospace; opacity: 0.6; }
+
+        select, button {
+            width: 100%; padding: 10px 14px;
+            border: 1px solid var(--glass-border);
+            background: var(--input-bg);
+            color: white; border-radius: 8px;
+            font-size: 0.9rem; outline: none; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* 停用狀態的樣式 */
+        input:disabled, select:disabled, button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        button:not(:disabled):hover { background-color: rgba(255, 255, 255, 0.15); }
+        button.primary { background: var(--accent-color); color: #09090b; border: none; font-weight: 600; }
+        button.primary:not(:disabled):hover { background: #c7d2fe; transform: translateY(-2px); }
+        
+        /* 購買按鈕特別樣式 */
+        .buy-btn {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #000;
+            border: none;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+            position: relative;
+        }
+        
+        .buy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+        }
+
+        .buy-btn::after {
+            content: "PREMIUM";
+            position: absolute;
+            top: -2px; right: -2px;
+            font-size: 0.5rem;
+            background: #000;
+            color: #fbbf24;
+            padding: 2px 4px;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* 滑桿樣式 */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; margin: 5px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px;
+            border-radius: 50%; background: #fff; cursor: pointer; margin-top: -5px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer;
+            background: rgba(255,255,255,0.2); border-radius: 2px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+            opacity: 0.5; /* 讓整個顏色區塊看起來被鎖定 */
+            pointer-events: none; /* 禁止點擊 */
+        }
+
+        .color-input-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--glass-border);
+        }
+
+        input[type="color"] {
+            position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            padding: 0; border: none; background: none;
+        }
+
+        .divider { height: 1px; background: var(--glass-border); margin: 5px 0; }
+
+        @media (max-width: 900px) {
+            body { height: auto; overflow: auto; }
+            .container { flex-direction: column; }
+            .canvas-wrapper { width: 100%; height: 400px; }
+            .controls { width: 100%; max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="canvas-wrapper">
+            <div id="noiseOverlay" class="noise-overlay"></div>
+            <canvas id="meshCanvas" width="1000" height="1000"></canvas>
+        </div>
+
+        <div class="controls">
+            <h1>Aurora Studio <span class="badge">FREE TRIAL</span></h1>
+
+            <h2>參數調整</h2>
+            
+            <div>
+                <label class="locked">流動速度</label>
+                <input type="range" id="speedRange" min="0" max="5" step="0.1" value="1.5" disabled>
+            </div>
+
+            <div>
+                <label class="locked">模糊強度</label>
+                <input type="range" id="blurRange" min="50" max="300" step="10" value="120" disabled>
+            </div>
+
+            <div>
+                <label class="locked">躁點強度</label>
+                <input type="range" id="grainRange" min="0" max="100" value="40" disabled>
+            </div>
+
+            <div class="divider"></div>
+
+            <h2>光點與色彩</h2>
+            
+            <div>
+                <label class="locked">光點數量</label>
+                <input type="range" id="countRange" min="2" max="10" step="1" value="5" disabled>
+            </div>
+
+            <div id="colorList" class="color-grid"></div>
+
+            <button id="randomBtn">
+                🎲 隨機生成 (試用)
+            </button>
+
+            <div class="divider"></div>
+
+            <h2>輸出</h2>
+            
+            <div style="display: flex; gap: 10px;">
+                <select id="sizeSelect" disabled>
+                    <option value="800x800">800x800 (試用版)</option>
+                </select>
+                <button id="downloadBtn" class="primary">下載圖片</button>
+            </div>
+            
+            <button id="recordBtn" disabled>錄影 (僅限付費版)</button>
+
+            <button class="buy-btn" onclick="window.open('https://your-shop-link.com', '_blank')">
+                前往購買完整版 🚀
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('meshCanvas');
+        const ctx = canvas.getContext('2d');
+        const noiseOverlay = document.getElementById('noiseOverlay');
+        const colorList = document.getElementById('colorList');
+        
+        // Buttons
+        const randomBtn = document.getElementById('randomBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Inputs (雖然 HTML disabled 了，但我們需要它們的預設值)
+        const grainRange = document.getElementById('grainRange');
+        
+        // --- 核心狀態 (固定預設值) ---
+        const CONFIG = {
+            baseRadius: 400,
+            breathSpeed: 0.015,
+            currentBlur: 120, // 固定值
+            currentSpeed: 1.5 // 固定值
+        };
+
+        let blobs = [];
+        let animationFrameId;
+        let noisePattern = null;
+
+        const random = (min, max) => Math.random() * (max - min) + min;
+        
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        function getRandomPastelColor() {
+            const h = Math.floor(random(0, 360));
+            const s = Math.floor(random(60, 90));
+            const l = Math.floor(random(60, 80));
+            return hslToHex(h, s, l);
+        }
+
+        function createBlob() {
+            return {
+                x: random(0, canvas.width),
+                y: random(0, canvas.height),
+                dx: random(-1, 1),
+                dy: random(-1, 1),
+                r: random(CONFIG.baseRadius - 100, CONFIG.baseRadius + 100),
+                origR: random(CONFIG.baseRadius - 100, CONFIG.baseRadius + 100),
+                rPhase: random(0, Math.PI * 2),
+                color: getRandomPastelColor()
+            };
+        }
+
+        function initBlobs() {
+            // 強制固定 5 個光點，忽略 input
+            blobs = [];
+            for (let i = 0; i < 5; i++) {
+                blobs.push(createBlob());
+            }
+            renderColorControls();
+        }
+
+        function renderColorControls() {
+            colorList.innerHTML = '';
+            blobs.forEach((blob) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'color-input-wrapper';
+                
+                const input = document.createElement('input');
+                input.type = 'color';
+                input.value = blob.color;
+                input.disabled = true; // JS 也強制 disabled
+
+                wrapper.appendChild(input);
+                colorList.appendChild(wrapper);
+            });
+        }
+
+        function updateBlobs() {
+            blobs.forEach(blob => {
+                blob.x += blob.dx * CONFIG.currentSpeed;
+                blob.y += blob.dy * CONFIG.currentSpeed;
+                blob.rPhase += CONFIG.breathSpeed;
+                blob.r = blob.origR + Math.sin(blob.rPhase) * (blob.origR * 0.2);
+
+                const margin = -200;
+                if (blob.x < margin || blob.x > canvas.width - margin) blob.dx *= -1;
+                if (blob.y < margin || blob.y > canvas.height - margin) blob.dy *= -1;
+            });
+        }
+
+        function draw(targetCtx, targetWidth, targetHeight, scale = 1, addNoise = false) {
+            targetCtx.clearRect(0, 0, targetWidth, targetHeight);
+            targetCtx.filter = `blur(${CONFIG.currentBlur * scale}px)`;
+            targetCtx.globalCompositeOperation = 'lighten';
+
+            blobs.forEach(blob => {
+                targetCtx.beginPath();
+                targetCtx.arc(blob.x * scale, blob.y * scale, blob.r * scale, 0, Math.PI * 2);
+                targetCtx.fillStyle = blob.color;
+                targetCtx.fill();
+                targetCtx.closePath();
+            });
+            
+            if (addNoise && noisePattern) {
+                targetCtx.filter = 'none';
+                targetCtx.globalCompositeOperation = 'overlay';
+                targetCtx.globalAlpha = 0.4; // 固定躁點強度 40%
+                targetCtx.fillStyle = noisePattern;
+                targetCtx.fillRect(0, 0, targetWidth, targetHeight);
+                targetCtx.globalAlpha = 1.0;
+            }
+            
+            targetCtx.globalCompositeOperation = 'source-over';
+        }
+
+        function animate() {
+            updateBlobs();
+            draw(ctx, canvas.width, canvas.height, 1, false);
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // --- 事件處理 ---
+        
+        // 隨機按鈕 (保留功能)
+        randomBtn.addEventListener('click', () => {
+            initBlobs();
+        });
+
+        // 下載按鈕 (限制功能)
+        downloadBtn.addEventListener('click', () => {
+            // 強制設定為 800x800，忽略任何其他設定
+            const w = 800;
+            const h = 800;
+            const scale = Math.max(w / canvas.width, h / canvas.height);
+            
+            const tCanvas = document.createElement('canvas');
+            tCanvas.width = w; tCanvas.height = h;
+            
+            // 下載時繪製躁點
+            draw(tCanvas.getContext('2d'), w, h, scale, true);
+            
+            const link = document.createElement('a');
+            link.download = `aurora-demo-${Date.now()}.png`;
+            link.href = tCanvas.toDataURL();
+            link.click();
+        });
+
+        function initNoiseTexture() {
+            const noiseSize = 256;
+            const c = document.createElement('canvas');
+            c.width = noiseSize; c.height = noiseSize;
+            const cx = c.getContext('2d');
+            const idata = cx.createImageData(noiseSize, noiseSize);
+            const buffer32 = new Uint32Array(idata.data.buffer);
+            for (let i = 0; i < buffer32.length; i++) {
+                buffer32[i] = Math.random() < 0.5 ? 0x33000000 : 0x33ffffff;
+            }
+            cx.putImageData(idata, 0, 0);
+            
+            const url = c.toDataURL();
+            noiseOverlay.style.backgroundImage = `url(${url})`;
+            noiseOverlay.style.opacity = 0.4; // 固定預覽透明度
+            
+            const img = new Image();
+            img.src = url;
+            img.onload = () => { noisePattern = ctx.createPattern(img, 'repeat'); };
+        }
+
+        window.onload = () => {
+            initNoiseTexture();
+            initBlobs();
+            animate();
+        };
+
+    </script>
+</body>
+</html>
