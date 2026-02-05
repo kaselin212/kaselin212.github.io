@@ -42,4 +42,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // --- 新增：Tab 切換邏輯 ---
+    const toggleBtns = document.querySelectorAll('.toggle-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // 1. 移除所有按鈕的 active 狀態
+            toggleBtns.forEach(b => b.classList.remove('active'));
+            // 2. 移除所有內容的 active 狀態
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            // 3. 加上當前點擊按鈕的 active
+            btn.classList.add('active');
+
+            // 4. 顯示對應的內容區塊 (根據 data-target)
+            const targetId = btn.getAttribute('data-target');
+            document.getElementById(targetId).classList.add('active');
+        });
+    });
 });

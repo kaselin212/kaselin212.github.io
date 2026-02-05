@@ -76,13 +76,12 @@ ul { list-style: none; }
     
     font-family: 'Noto Sans TC', sans-serif; /* 確保中文顯示正常，可換其他黑體 */
     font-size: 6rem;
-    font-weight: 900;
+    font-weight: 700;
     white-space: nowrap;
     z-index: -1;
     
     /* 鏤空效果 */
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); 
+    color: rgba(234, 190, 255, 0.1);
     letter-spacing: 10px;
     opacity: 0.6;
 }
@@ -257,13 +256,10 @@ ul { list-style: none; }
 }
 
 .hero-section {
-    min-height: 90vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding-top: 80px;
-    /* 頂部背景光暈效果 */
-    background: radial-gradient(circle at 50% -10%, rgba(128, 174, 235, 0.25) 0%, rgba(24, 28, 42, 0) 60%);
 }
 
 .hero-section h1 { font-size: 4rem; margin-bottom: 16px; font-weight: 700; letter-spacing: -2px;}
@@ -288,21 +284,150 @@ ul { list-style: none; }
 .fade-in { opacity: 0; transform: translateY(30px); transition: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-.decoration {
-    position: absolute;
-    font-size: 1.5rem;
-    background: var(--main-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: sparkle 3s infinite ease-in-out;
-}
-.star-1 { top: 0; right: 5%; }
-.star-2 { bottom: 5%; left: 0%; font-size: 1rem; }
-
 @keyframes sparkle {
     0%, 100% { opacity: 0.4; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.3) rotate(10deg); }
+}
+
+/* --- Hero Section Updates --- */
+.hero-section {
+    position: relative; /* 確保子元素絕對定位是相對於此區塊 */
+    /* 移除原本的 background-gradient，改用圖片，或者保留作為 fallback */
+    overflow: hidden; /* 防止圖片超出範圍 */
+}
+
+/* 讓內容層級高於圖片 */
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* 底部 Banner 圖片設定 */
+.hero-banner-wrapper {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60%; /* 高度可依據視覺調整，這裡設為 60% 營造漸層感 */
+    z-index: 1;
+    pointer-events: none; /* 確保圖片不會擋到滑鼠互動 */
+}
+
+.hero-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 保持圖片比例並填滿 */
+    object-position: bottom; /* 對齊底部 */
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%); /* (選用) 讓圖片上方邊緣更柔和 */
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    opacity: 0.8;
+}
+
+/* --- About Toggle Switch --- */
+.toggle-container {
+    margin-top: 32px;
+    display: flex;
+    gap: 16px;
+    justify-content: center; /* 如果是手機版置中，電腦版可以改 flex-start */
+}
+
+@media (min-width: 769px) {
+    .toggle-container {
+        justify-content: flex-start; /* 電腦版靠左對齊 */
+    }
+}
+
+.toggle-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--sub-text);
+    padding: 10px 24px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.toggle-btn:hover {
+    color: var(--white-color);
+    border-color: var(--second-color);
+}
+
+/* 啟用狀態：變成漸層背景 */
+.toggle-btn.active {
+    background: var(--main-gradient);
+    color: var(--bg-color);
+    font-weight: 700;
+    border-color: transparent;
+    box-shadow: 0 0 15px rgba(234, 190, 255, 0.2);
+}
+
+/* --- Tab Content Logic --- */
+.tab-content {
+    display: none; /* 預設隱藏 */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.tab-content.active {
+    display: block; /* 加上 active 才顯示 */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Skills Section Styles --- */
+.skills-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.skill-category h3 {
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    color: var(--white-color);
+    border-left: 3px solid var(--main-color);
+    padding-left: 12px;
+}
+
+.skill-item {
+    margin-bottom: 16px;
+}
+
+.skill-item span {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background: var(--main-gradient);
+    border-radius: 4px;
+    position: relative;
+}
+
+/* (選用) 增加進度條光暈 */
+.progress::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 5px;
+    background: #fff;
+    box-shadow: 0 0 10px #fff;
+    opacity: 0.7;
 }
 
 /* --- 9. RWD --- */

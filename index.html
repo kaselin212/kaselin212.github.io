@@ -23,7 +23,7 @@
     </nav>
 
     <header id="home" class="hero-section">
-        <div class="container">
+        <div class="container hero-content">
             <h1 class="fade-in">Hi, I'm Iris.</h1>
             <p class="subtitle fade-in">UI/UX Designer & Visual Design</p>
             <p class="description fade-in">視覺與邏輯的轉譯者，專注於打造直覺且美觀的介面。</p>
@@ -34,6 +34,9 @@
                 <a href="#"><i class="fa-brands fa-instagram"></i></a>
                 <a href="#"><i class="fa-regular fa-envelope"></i></a>
             </div>
+        </div>
+        <div class="hero-banner-wrapper">
+            <img src="img/banner.png" alt="Decorative Gradient" class="hero-banner-img">
         </div>
     </header>
 
@@ -48,33 +51,80 @@
                     <div class="profile-circle">
                         </div>
                     <p class="profile-text">擁抱變化，持續學習。相信好的設計不只是好看，更是好用。</p>
+                    
+                    <div class="toggle-container">
+                        <button class="toggle-btn active" data-target="timeline">Experience</button>
+                        <button class="toggle-btn" data-target="skills">Skills</button>
+                    </div>
                 </div>
 
-                <div class="timeline fade-in">
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="date">2024.5 - Present</span>
-                            <h3>知名電商 視覺設計師</h3>
-                            <p>負責官網活動頁面設計、App UI 優化。</p>
+                <div class="content-display-area fade-in">
+                    
+                    <div id="timeline" class="tab-content active">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <span class="date">2024.5 - Present</span>
+                                    <h3>知名電商 視覺設計師</h3>
+                                    <p>負責官網活動頁面設計、App UI 優化。</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <span class="date">2022.1 - 2024.4</span>
+                                    <h3>大滿貫科技股份有限公司 UI 設計師</h3>
+                                    <p>主導 B2B 後台管理系統介面改版，建立 Design System。</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <span class="date">2020.2 - 2021.12</span>
+                                    <h3>初試啼聲設計工作室 網頁實習生</h3>
+                                    <p>協助前端切版與基礎視覺設計。</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="date">2022.1 - 2024.4</span>
-                            <h3>大滿貫科技股份有限公司 UI 設計師</h3>
-                            <p>主導 B2B 後台管理系統介面改版，建立 Design System。</p>
+
+                    <div id="skills" class="tab-content">
+                        <div class="skills-grid">
+                            <div class="skill-category">
+                                <h3>Design</h3>
+                                <div class="skill-item">
+                                    <span>Figma / FigJam</span>
+                                    <div class="progress-bar"><div class="progress" style="width: 95%"></div></div>
+                                </div>
+                                <div class="skill-item">
+                                    <span>Adobe Photoshop</span>
+                                    <div class="progress-bar"><div class="progress" style="width: 90%"></div></div>
+                                </div>
+                                <div class="skill-item">
+                                    <span>Adobe Illustrator</span>
+                                    <div class="progress-bar"><div class="progress" style="width: 85%"></div></div>
+                                </div>
+                            </div>
+                            
+                            <div class="skill-category">
+                                <h3>Development</h3>
+                                <div class="skill-item">
+                                    <span>HTML / CSS</span>
+                                    <div class="progress-bar"><div class="progress" style="width: 90%"></div></div>
+                                </div>
+                                <div class="skill-item">
+                                    <span>JavaScript (ES6+)</span>
+                                    <div class="progress-bar"><div class="progress" style="width: 70%"></div></div>
+                                </div>
+                                <div class="skill-item">
+                                    <span>React.js</span>
+                                    <div class="progress-bar"><div class="progress" style="width: 60%"></div></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-content">
-                            <span class="date">2020.2 - 2021.12</span>
-                            <h3>初試啼聲設計工作室 網頁實習生</h3>
-                            <p>協助前端切版與基礎視覺設計。</p>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -85,15 +135,11 @@
             <div class="title-wrapper fade-in">
                 <h2 class="section-title" data-bg-text="專案作品">Projects</h2>
             </div>
-            
             <div class="projects-grid">
                 <article class="project-card fade-in">
                     <div class="card-glass-layer">
                         <div class="card-header">
-                            <div class="tags">
-                                <span class="tag">UI/UX</span>
-                                <span class="tag">Web</span>
-                            </div>
+                            <div class="tags"><span class="tag">UI/UX</span><span class="tag">Web</span></div>
                         </div>
                         <div class="card-image"></div>
                         <div class="card-body">
@@ -102,14 +148,10 @@
                         </div>
                     </div>
                 </article>
-
                 <article class="project-card fade-in">
                     <div class="card-glass-layer">
                         <div class="card-header">
-                            <div class="tags">
-                                <span class="tag">App</span>
-                                <span class="tag">Figma</span>
-                            </div>
+                            <div class="tags"><span class="tag">App</span><span class="tag">Figma</span></div>
                         </div>
                         <div class="card-image"></div>
                         <div class="card-body">
@@ -118,13 +160,10 @@
                         </div>
                     </div>
                 </article>
-
                 <article class="project-card fade-in">
                     <div class="card-glass-layer">
                         <div class="card-header">
-                            <div class="tags">
-                                <span class="tag">Branding</span>
-                            </div>
+                            <div class="tags"><span class="tag">Branding</span></div>
                         </div>
                         <div class="card-image"></div>
                         <div class="card-body">
@@ -133,13 +172,10 @@
                         </div>
                     </div>
                 </article>
-
-                 <article class="project-card fade-in">
+                <article class="project-card fade-in">
                     <div class="card-glass-layer">
                         <div class="card-header">
-                            <div class="tags">
-                                <span class="tag">Coding</span>
-                            </div>
+                            <div class="tags"><span class="tag">Coding</span></div>
                         </div>
                         <div class="card-image"></div>
                         <div class="card-body">
@@ -150,9 +186,6 @@
                 </article>
             </div>
         </div>
-        
-        <div class="decoration star-1"><i class="fa-solid fa-star"></i></div>
-        <div class="decoration star-2"><i class="fa-solid fa-star"></i></div>
     </section>
 
     <footer class="fade-in">
