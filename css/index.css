@@ -450,3 +450,51 @@ ul { list-style: none; }
     .timeline { padding-left: 20px; border-left: 1px solid var(--sub-text); } /* 手機版簡化邊框 */
     .timeline-dot { left: -26px; }
 }
+
+/* --- Meteor Effect (流星特效) --- */
+#meteor-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* 位於背景層，但在內容之下 */
+    pointer-events: none; /* 確保點擊穿透，不會擋到任何連結 */
+    overflow: hidden;
+}
+
+.meteor {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: 2px;
+    background: linear-gradient(-90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1)); /* 白色拖尾 */
+    opacity: 0;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)); /* 發光效果 */
+    transform: rotate(-45deg); /* 傾斜角度 */
+    animation: meteor-drop linear infinite; /* 動畫設定 */
+}
+
+/* 流星動畫關鍵影格 */
+@keyframes meteor-drop {
+    0% {
+        opacity: 0;
+        transform: translate(300px, -300px) rotate(-45deg); /* 從右上角遠處開始 */
+    }
+    10% {
+        opacity: 1; /* 瞬間變亮 */
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-100vh, 100vh) rotate(-45deg); /* 往左下角劃過 */
+    }
+}
+
+/* 確保主要內容蓋在流星上面 */
+.nav-container, 
+.hero-section, 
+section, 
+footer {
+    position: relative;
+    z-index: 2; 
+}

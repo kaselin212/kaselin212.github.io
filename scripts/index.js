@@ -62,4 +62,32 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(targetId).classList.add('active');
         });
     });
+
+    // --- 新增：流星生成邏輯 ---
+    const meteorContainer = document.getElementById('meteor-container');
+    const meteorCount = 12; // 流星數量，可自行調整
+
+    for (let i = 0; i < meteorCount; i++) {
+        createMeteor();
+    }
+
+    function createMeteor() {
+        const meteor = document.createElement('div');
+        meteor.classList.add('meteor');
+
+        // 隨機設定流星參數
+        const left = Math.random() * 100; // 隨機水平位置 (0-100vw)
+        const delay = Math.random() * 5;  // 隨機延遲 (0-5s)
+        const duration = Math.random() * 3 + 2; // 隨機速度 (2-5s)
+        const width = Math.random() * 100 + 50; // 隨機長度 (50-150px)
+
+        // 套用樣式
+        meteor.style.left = `${left}vw`;
+        meteor.style.top = `${Math.random() * -20}vh`; // 讓起點稍微有些垂直差異
+        meteor.style.width = `${width}px`;
+        meteor.style.animationDelay = `${delay}s`;
+        meteor.style.animationDuration = `${duration}s`;
+
+        meteorContainer.appendChild(meteor);
+    }
 });
