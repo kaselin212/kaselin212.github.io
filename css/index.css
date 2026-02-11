@@ -498,3 +498,118 @@ footer {
     position: relative;
     z-index: 2; 
 }
+
+/* --- Side Projects (List Style) --- */
+.side-projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* 項目之間的間距 */
+    max-width: 900px; /* 限制寬度讓閱讀更集中 */
+    margin: 0 auto;
+}
+
+.side-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    
+    /* 更加通透的背景，區別於上方卡片 */
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    
+    /* 左側預留一條線的空間做 Hover 效果 */
+    border-left: 3px solid transparent; 
+    
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+/* Hover 效果：背景變亮，左側出現漸層邊框 */
+.side-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    border-left-color: var(--second-color); /* 或是用 var(--main-color) */
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    transform: translateX(5px); /* 輕微向右位移 */
+}
+
+.side-content {
+    flex: 1;
+    padding-right: 24px;
+}
+
+.side-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: var(--white-color);
+    font-weight: 500;
+}
+
+/* Hover 時標題變色 */
+.side-item:hover .side-content h3 {
+    background: var(--main-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.side-content p {
+    color: var(--sub-text);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.side-meta {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-width: 200px; /* 確保右側寬度一致 */
+    justify-content: flex-end;
+}
+
+.tech-stack {
+    display: flex;
+    gap: 8px;
+}
+
+.tech-stack span {
+    font-size: 0.75rem;
+    color: var(--second-color);
+    background: rgba(128, 174, 235, 0.1);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.arrow-icon {
+    font-size: 1.2rem;
+    color: var(--sub-text);
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.side-item:hover .arrow-icon {
+    color: var(--main-color);
+    transform: translateX(5px); /* 箭頭移動動畫 */
+}
+
+/* --- RWD for Side Projects --- */
+@media (max-width: 768px) {
+    .side-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .side-meta {
+        width: 100%;
+        justify-content: space-between; /* 手機版時 Tag 和箭頭分開 */
+        min-width: auto;
+    }
+    
+    .side-content {
+        padding-right: 0;
+    }
+}
